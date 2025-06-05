@@ -6,13 +6,12 @@
 
 namespace epl
 {
-	template <Entity MAX_ENTITIES>
 	class Registry
 	{
 	public:
-		Registry()
+		Registry(Entity maxEntities) : m_maxEntities(maxEntities)
 		{
-			static_assert(MAX_ENTITIES < NULL_ENTITY, "MAX_ENTITIES must be less than 0xFFFFFFFF");
+			assert(maxEntities < NULL_ENTITY && "MAX_ENTITIES must be less than 0xFFFFFFFF");
 		}
 
 		~Registry() = default;
@@ -20,7 +19,7 @@ namespace epl
 		// Creates and returns a new empty entity.
 		Entity createEntity()
 		{
-			assert(m_aliveEntityCount <= MAX_ENTITIES && "Maximum number of entities reached.");
+			assert(m_aliveEntityCount <= m_maxEntities && "Maximum number of entities reached.");
 
 			m_aliveEntityCount++;
 			if (m_freeEntities.empty())
@@ -54,7 +53,7 @@ namespace epl
 		{
 			size_t index = getIndex<Component_T>();
 			assert(index >= m_componentPools.size() && "Component type already registered.");
-			m_componentPools.push_back(std::make_unique<ComponentPool<Component_T, MAX_ENTITIES>>());
+			m_componentPools.push_back(std::make_unique<ComponentPool<Component_T>>(m_maxEntities));
 		}
 
 		template <class Component_T, typename... Args>
@@ -110,10 +109,10 @@ namespace epl
 
 
 		template<class Component_T>
-		ComponentPool<Component_T, MAX_ENTITIES>& iterate() { return *poolPtr<Component_T>(); }
+		ComponentPool<Component_T>& iterate() { return *poolPtr<Component_T>(); }
 
 		template<class Component_T>
-		const ComponentPool<Component_T, MAX_ENTITIES>& iterate() const { return *poolPtr<Component_T>(); }
+		const ComponentPool<Component_T>& iterate() const { return *poolPtr<Component_T>(); }
 
 	private:
 		template<class Component_T>
@@ -127,7 +126,7 @@ namespace epl
 
 		//Helper functions to get the casted pointer to a component pool knowing only the component type.
 		template<class Component_T>
-		ComponentPool<Component_T, MAX_ENTITIES>* poolPtr() const
+		ComponentPool<Component_T>* poolPtr() const
 		{
 			size_t index = getIndex<Component_T>();
 			assert(index < m_componentPools.size() && "Component type not registered.");
@@ -137,13 +136,14 @@ namespace epl
 		}
 
 		template<class Component_T>
-		ComponentPool<Component_T, MAX_ENTITIES>* poolPtr(const std::unique_ptr<IComponentPool>& pool) const
+		ComponentPool<Component_T>* poolPtr(const std::unique_ptr<IComponentPool>& pool) const
 		{
-			return static_cast<ComponentPool<Component_T, MAX_ENTITIES>*>(pool.get());
+			return static_cast<ComponentPool<Component_T>*>(pool.get());
 		}
 
 
 	private:
+		const Entity m_maxEntities;
 		Entity m_nextEntity = 0;
 		Entity m_aliveEntityCount = 0;
 		std::queue<Entity> m_freeEntities;

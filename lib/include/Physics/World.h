@@ -1,18 +1,19 @@
 #pragma once
 #include <ECS/Entity.h>
-
+#include <memory>
 namespace epl
 {
-	template <Entity MAX_ENTITIES>
 	class World
 	{
 		
 	public:
-		Registry<MAX_ENTITIES>& getRegistry() { return m_registry; }
-		const Registry<MAX_ENTITIES>& getRegistry() const { return m_registry; }
+		World(size_t maxEntities);
+		World(std::shared_ptr<Registry> registry);
+
+		Registry& getRegistry() { return *m_registry; }
+		const Registry& getRegistry() const { return *m_registry; }
 	private:
-		Registry<MAX_ENTITIES> m_registry;
+		std::shared_ptr<Registry> m_registry;
 	};
 
-	using DefaultWorld = World<4096>;
 }

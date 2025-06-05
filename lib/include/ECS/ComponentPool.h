@@ -16,19 +16,21 @@ namespace epl
 		virtual void removeIfPresent(Entity entity) = 0;
 	};
 
-	template <class T, Entity MAX_COMPONENTS>
+	template <class T>
 	class ComponentPool : public IComponentPool
 	{
 
 	public:
-		ComponentPool() = default;
+		ComponentPool(Entity maxComponents)
+			: m_storage(maxComponents)
+		{}
 		~ComponentPool() override = default;
 
 		template <typename ...Args>
 		T& add(Entity entity, Args&&... args)
 		{
 			static_assert(std::is_constructible_v<T, Args...>, "Component cannot be constructed with the given arguments.");
-			assert(entity <= MAX_COMPONENTS && "Entity out of bounds.");
+			assert(entity <= m_storage.size() && "Entity out of bounds.");
 			assert(!m_storage[entity].has_value() && "Cannot add same component twice.");
 
 			m_highestEntityEver = std::max(m_highestEntityEver, entity);
@@ -77,7 +79,7 @@ namespace epl
 		}
 
 	private:
-		std::vector<std::optional<T>> m_storage = std::vector<std::optional<T>>(MAX_COMPONENTS);
+		std::vector<std::optional<T>> m_storage;
 		Entity m_highestEntityEver = 0;
 
 #pragma region Iterators
@@ -86,7 +88,7 @@ namespace epl
 		class Iterator
 		{
 		public:
-			Iterator(ComponentPool<T, MAX_COMPONENTS>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
+			Iterator(ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
 			
 			bool operator!=(const Iterator& other) const
 			{
@@ -106,14 +108,14 @@ namespace epl
 				return { m_currentEntity, *m_pool.m_storage[m_currentEntity] };
 			}
 		private:
-			ComponentPool<T, MAX_COMPONENTS>& m_pool;
+			ComponentPool<T>& m_pool;
 			Entity m_currentEntity;
 		};
 
 		class ConstIterator
 		{
 		public:
-			ConstIterator(const ComponentPool<T, MAX_COMPONENTS>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
+			ConstIterator(const ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
 
 			bool operator!=(const ConstIterator& other) const
 			{
@@ -132,7 +134,7 @@ namespace epl
 				return { m_currentEntity, *m_pool.m_storage[m_currentEntity] };
 			}
 		private:
-			const ComponentPool<T, MAX_COMPONENTS>& m_pool;
+			const ComponentPool<T>& m_pool;
 			Entity m_currentEntity;
 		};
 		

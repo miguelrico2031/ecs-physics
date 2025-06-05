@@ -12,6 +12,9 @@ namespace epl
 	using AngularVelocity = Vector3;
 	using TorqueSum = Vector3;
 
+	using Gravity = Vector3;
+	constexpr Vector3 DefaultGravity() { return { 0.f, -9.81f, 0.f }; }
+
 	struct Mass
 	{
 		float mass;

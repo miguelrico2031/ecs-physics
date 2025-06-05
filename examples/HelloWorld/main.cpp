@@ -10,25 +10,17 @@ int main()
 	struct ExampleComponent
 	{
 		ExampleComponent(int v1, int v2) : value1(v1), value2(v2) {}
-		~ExampleComponent()
-		{
-			std::cout << "destroying example component" << std::endl;	
-		}
-		void print() const
-		{
-			std::cout << "Value1: " << value1 << ", Value2: " << value2 << std::endl;
-		}
-
+		~ExampleComponent() { std::cout << "destroying example component" << std::endl; }
+		void print() const { std::cout << "Value1: " << value1 << ", Value2: " << value2 << std::endl; }
 
 		int value1;
 		int value2;
-
 	};
 
 	using FloatComponent = float;
 
 	constexpr size_t MAX_ENTITIES = 4096;
-	epl::Registry<MAX_ENTITIES> registry;
+	epl::Registry registry(MAX_ENTITIES);
 	registry.registerComponentType<ExampleComponent>();
 	registry.registerComponentType<FloatComponent>();
 	epl::Entity entity = registry.createEntity();
@@ -61,7 +53,7 @@ int main()
 //Intellisense is dumb, I have to help it figure out howe the component pool works
 void unusedFunction()
 {
-	epl::ComponentPool<int, 10> pool;
+	epl::ComponentPool<int> pool(10);
 	pool.add(2, 90);
 	pool.get(2);
 	pool.getOptional(2);
