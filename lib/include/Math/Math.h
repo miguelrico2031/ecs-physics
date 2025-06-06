@@ -26,8 +26,6 @@ namespace epl::Math
 	// Public constexpr sqrt function
 	inline constexpr float sqrt(float x) noexcept
 	{
-		return x >= 0.0f
-			? (x == 0.0f ? 0.0f : sqrtNewtonRaphson(x, x, 0.0f))
-			: throw "sqrt: negative input";
+		return x > 0.f ? sqrtNewtonRaphson(x, x, 0.f) : 0.f;
 	}
 }

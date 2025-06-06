@@ -1,6 +1,5 @@
 #pragma once
 #include "Math.h"
-
 namespace epl
 {
 	struct Quaternion
@@ -18,6 +17,11 @@ namespace epl
 			return Math::fEquals(w, other.w) && Math::fEquals(x, other.x) && Math::fEquals(y, other.y) && Math::fEquals(z, other.z);
 		}
 
+		constexpr bool operator!=(const Quaternion& other) const noexcept
+		{
+			return !(*this == other);
+		}
+
 		constexpr Quaternion operator*(const Quaternion& q) const noexcept
 		{
 			return
@@ -29,6 +33,55 @@ namespace epl
 			};
 		}
 
+		constexpr Quaternion operator+(const Quaternion& q) const noexcept
+		{
+			return { w + q.w, x + q.x, y + q.y, z + q.z };
+		}
+
+		constexpr Quaternion operator-(const Quaternion& q) const noexcept
+		{
+			return { w - q.w, x - q.x, y - q.y, z - q.z };
+		}
+
+		constexpr Quaternion& operator+=(const Quaternion& q) noexcept
+		{
+			w += q.w; x += q.x; y += q.y; z += q.z;
+			return *this;
+		}
+
+		constexpr Quaternion& operator-=(const Quaternion& q) noexcept
+		{
+			w -= q.w; x -= q.x; y -= q.y; z -= q.z;
+			return *this;
+		}
+
+		constexpr Quaternion& operator*=(const Quaternion& q) noexcept
+		{
+			*this = *this * q;
+			return *this;
+		}
+
+		constexpr Quaternion& operator*=(float scalar) noexcept
+		{
+			w *= scalar; x *= scalar; y *= scalar; z *= scalar;
+			return *this;
+		}
+
+		constexpr Quaternion& operator/=(float scalar) noexcept
+		{
+			w /= scalar; x /= scalar; y /= scalar; z /= scalar;
+			return *this;
+		}
+
+		constexpr Quaternion operator*(float scalar) const noexcept
+		{
+			return { w * scalar, x * scalar, y * scalar, z * scalar };
+		}
+
+		constexpr Quaternion operator/(float scalar) const noexcept
+		{
+			return { w / scalar, x / scalar, y / scalar, z / scalar };
+		}
 
 		static constexpr Quaternion conjugate(const Quaternion& q) noexcept
 		{
@@ -45,11 +98,10 @@ namespace epl
 			return q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z;
 		}
 
-
 		static constexpr Quaternion normalize(const Quaternion& q) noexcept
 		{
 			float len = magnitude(q);
-			return Math::fEqualsZero(len) ? Quaternion::identity() : Quaternion{q.w / len, q.x / len, q.y / len, q.z / len};
+			return Math::fEqualsZero(len) ? Quaternion::identity() : Quaternion{ q.w / len, q.x / len, q.y / len, q.z / len };
 		}
 
 		static constexpr Quaternion identity() noexcept
@@ -58,4 +110,14 @@ namespace epl
 		}
 	};
 
+
+	constexpr Quaternion operator*(float scalar, const Quaternion& q) noexcept
+	{
+		return { q.w * scalar, q.x * scalar, q.y * scalar, q.z * scalar };
+	}
+
+	constexpr Quaternion operator/(float scalar, const Quaternion& q) noexcept
+	{
+		return { scalar / q.w, scalar / q.x,  scalar / q.y, scalar / q.z };
+	}
 }

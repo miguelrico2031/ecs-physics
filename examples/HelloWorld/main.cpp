@@ -1,54 +1,39 @@
 #include <iostream>
-#include <ECS/Registry.h>
-#include <ECS/ComponentPool.h>
-#include <Math/Vector3.h>
-#include <Physics/Components.h>
 #include <Physics/World.h>
+
+
+
 int main()
 {
+	epl::World world(4096);
 
-	struct ExampleComponent
+	auto& reg = world.getRegistry();
+
+	float mass1 = 1, mass2 = 1;
+	epl::Vector3 pos1 = { 0, 10, 0 }, pos2 = { 5, 10, -10 };
+
+	epl::Entity e1 = world.createDynamicBody(mass1, pos1);
+	epl::Entity e2 = world.createDynamicBody(mass2, pos2);
+
+	reg.getComponent<epl::LinearVelocity>(e1).value = { 0, 2, 0 };
+
+	std::cout << "Pos1: " << pos1.x << ", " << pos1.y << ", " << pos1.z << std::endl;
+	std::cout << "Pos2: " << pos2.x << ", " << pos2.y << ", " << pos2.z << std::endl;
+	std::cout << "SIMULATION RUN" << std::endl;
+
+	for (size_t i = 0; i < 60; i++)
 	{
-		ExampleComponent(int v1, int v2) : value1(v1), value2(v2) {}
-		~ExampleComponent() { std::cout << "destroying example component" << std::endl; }
-		void print() const { std::cout << "Value1: " << value1 << ", Value2: " << value2 << std::endl; }
-
-		int value1;
-		int value2;
-	};
-
-	using FloatComponent = float;
-
-	constexpr size_t MAX_ENTITIES = 4096;
-	epl::Registry registry(MAX_ENTITIES);
-	registry.registerComponentType<ExampleComponent>();
-	registry.registerComponentType<FloatComponent>();
-	epl::Entity entity = registry.createEntity();
-	registry.addComponent<ExampleComponent>(entity, 10, 20);
-	registry.addComponent<FloatComponent>(entity, 1.5f);
-
-	const auto& creg = registry;
-	const auto& ec = creg.getComponent<ExampleComponent>(entity);
-	std::cout << "ExampleComponent values: ";
-	ec.print();
-	auto& fc = registry.getComponent<FloatComponent>(entity);
-	std::cout << "FloatComponent value: " << fc << std::endl;
-
-
-	epl::Entity entity2 = registry.createEntity();
-	registry.addComponent<ExampleComponent>(entity2, 30, 40);
-	std::cout << "new entity added.\n";
-
-	for (auto [e, c] : registry.iterate<ExampleComponent>())
-	{
-		std::cout << "Entity " << e << " has ExampleComponent with values: ";
-		c.print();
+		world.step(1.f / 60.f);
+		std::cout << "Step: " << i + 1 << std::endl;
+		pos1 = reg.getComponent<epl::Position>(e1).value;
+		pos2 = reg.getComponent<epl::Position>(e2).value;
+		std::cout << "Pos1: " << pos1.x << ", " << pos1.y << ", " << pos1.z << std::endl;
+		std::cout << "Pos2: " << pos2.x << ", " << pos2.y << ", " << pos2.z << std::endl;
 	}
 
-	registry.registerComponentType<epl::Mass>();
-	registry.addComponent<epl::Mass>(entity2, 1);
-
 }
+
+
 
 //Intellisense is dumb, I have to help it figure out howe the component pool works
 void unusedFunction()

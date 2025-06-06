@@ -80,7 +80,6 @@ namespace epl
 		template<class Component_T>
 		Component_T& getComponent(Entity entity)
 		{
-			std::cout << "nonconst getcomponent\n";
 			auto* pool = poolPtr<Component_T>();
 			return pool->get(entity);
 		}
@@ -88,7 +87,6 @@ namespace epl
 		template<class Component_T>
 		const Component_T& getComponent(Entity entity) const
 		{
-			std::cout << "const getcomponent\n";
 			auto* pool = poolPtr<Component_T>();
 			return pool->get(entity);
 		}
