@@ -17,7 +17,7 @@ namespace epl
 		{
 			ForceSum& forceSum = registry.getComponent<ForceSum>(entity);
 			const Mass& mass = registry.getComponent<Mass>(entity);
-			velocity.value += forceSum.value * mass.inverseMass * dt;
+			velocity.value += forceSum.value * (mass.inverseMass * dt);
 			forceSum.value = Vector3::zero();
 		}
 	}
@@ -46,7 +46,7 @@ namespace epl
 		{
 			Rotation& rotation = registry.getComponent<Rotation>(entity);
 			Quaternion deltaRotation = Quaternion{ 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z } * rotation.value;
-			rotation.value += 0.5f * deltaRotation * dt;
+			rotation.value += deltaRotation * (0.5f * dt);
 			rotation.value = Quaternion::normalize(rotation.value);
 		}
 	}

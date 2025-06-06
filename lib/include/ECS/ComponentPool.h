@@ -4,6 +4,7 @@
 #include <optional>
 #include <cassert>
 #include <tuple>
+#include <algorithm>
 
 namespace epl
 {
@@ -33,7 +34,7 @@ namespace epl
 			assert(entity <= m_storage.size() && "Entity out of bounds.");
 			assert(!m_storage[entity].has_value() && "Cannot add same component twice.");
 
-			m_highestEntityEver = std::max(m_highestEntityEver, entity);
+			m_highestEntityEver = std::max(m_highestEntityEver, static_cast<int64_t>(entity));
 
 			m_storage[entity].emplace(std::forward<Args>(args)...);
 			return m_storage[entity].value();
@@ -80,7 +81,7 @@ namespace epl
 
 	private:
 		std::vector<std::optional<T>> m_storage;
-		Entity m_highestEntityEver = 0;
+		int64_t m_highestEntityEver = -1;
 
 #pragma region Iterators
 

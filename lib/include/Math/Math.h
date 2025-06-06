@@ -3,19 +3,19 @@
 
 namespace epl::Math
 {
-	inline constexpr float fAbs(float value) noexcept
+	inline constexpr float abs(float value) noexcept
 	{
 		return value < 0.0f ? -value : value;
 	}
 
-	inline constexpr bool fEquals(float a, float b, float epsilon = 0.0005f) noexcept
+	inline constexpr bool equals(float a, float b, float epsilon = 0.0005f) noexcept
 	{
-		return fAbs(a - b) < epsilon;
+		return abs(a - b) < epsilon;
 	}
 
-	inline constexpr bool fEqualsZero(float a, float epsilon = 0.0005f) noexcept
+	inline constexpr bool equalsZero(float a, float epsilon = 0.0005f) noexcept
 	{
-		return fEquals(a, 0.0f, epsilon);
+		return equals(a, 0.0f, epsilon);
 	}
 
 	inline constexpr float sqrtNewtonRaphson(float x, float curr, float prev) noexcept

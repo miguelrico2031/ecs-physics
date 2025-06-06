@@ -62,7 +62,7 @@ namespace epl
 
 		constexpr bool operator==(const Vector3& other) const noexcept
 		{
-			return Math::fEquals(x, other.x) && Math::fEquals(y, other.y) && Math::fEquals(z, other.z);
+			return Math::equals(x, other.x) && Math::equals(y, other.y) && Math::equals(z, other.z);
 		}
 
 		constexpr bool operator!=(const Vector3& other) const noexcept
@@ -93,7 +93,7 @@ namespace epl
         static constexpr Vector3 normalize(const Vector3& v) noexcept  
         {  
             float len = magnitude(v);  
-            return Math::fEqualsZero(len) ? Vector3::zero() : Vector3{v.x / len, v.y / len, v.z / len};  
+            return Math::equalsZero(len) ? Vector3::zero() : Vector3{v.x / len, v.y / len, v.z / len};  
         }
 
 		static constexpr Vector3 zero() noexcept

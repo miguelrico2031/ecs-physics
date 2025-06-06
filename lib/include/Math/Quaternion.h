@@ -14,7 +14,7 @@ namespace epl
 
 		constexpr bool operator==(const Quaternion& other) const noexcept
 		{
-			return Math::fEquals(w, other.w) && Math::fEquals(x, other.x) && Math::fEquals(y, other.y) && Math::fEquals(z, other.z);
+			return Math::equals(w, other.w) && Math::equals(x, other.x) && Math::equals(y, other.y) && Math::equals(z, other.z);
 		}
 
 		constexpr bool operator!=(const Quaternion& other) const noexcept
@@ -101,7 +101,7 @@ namespace epl
 		static constexpr Quaternion normalize(const Quaternion& q) noexcept
 		{
 			float len = magnitude(q);
-			return Math::fEqualsZero(len) ? Quaternion::identity() : Quaternion{ q.w / len, q.x / len, q.y / len, q.z / len };
+			return Math::equalsZero(len) ? Quaternion::identity() : Quaternion{ q.w / len, q.x / len, q.y / len, q.z / len };
 		}
 
 		static constexpr Quaternion identity() noexcept

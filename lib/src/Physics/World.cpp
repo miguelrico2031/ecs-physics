@@ -47,14 +47,13 @@ namespace epl
 
 	void World::step(float timeStep, unsigned int substeps)
 	{
-		assert(substeps > 0 && "The minimum number of substeps is 1.");
-
-		float timeSubstep = timeStep / substeps;
+		assert(substeps > 0 && "Substeps must be greater than zero.");
+		float timeStepPerSubstep = timeStep / substeps;
 
 		for (size_t i = 0; i < substeps; i++)
 		{
 			m_gravitySystem->applyGravity(*m_registry);
-			m_integrationSystem->integrate(*m_registry, timeSubstep);
+			m_integrationSystem->integrate(*m_registry, timeStepPerSubstep);
 		}
 	}
 
