@@ -89,7 +89,13 @@ namespace epl
 		class Iterator
 		{
 		public:
-			Iterator(ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
+			Iterator(ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index)
+			{
+				while (m_currentEntity <= m_pool.m_highestEntityEver && !m_pool.m_storage[m_currentEntity].has_value())
+				{
+					m_currentEntity++;
+				}
+			}
 			
 			bool operator!=(const Iterator& other) const
 			{
@@ -116,7 +122,13 @@ namespace epl
 		class ConstIterator
 		{
 		public:
-			ConstIterator(const ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index) {}
+			ConstIterator(const ComponentPool<T>& pool, Entity index) : m_pool(pool), m_currentEntity(index)
+			{
+				while (m_currentEntity <= m_pool.m_highestEntityEver && !m_pool.m_storage[m_currentEntity].has_value())
+				{
+					m_currentEntity++;
+				}
+			}
 
 			bool operator!=(const ConstIterator& other) const
 			{

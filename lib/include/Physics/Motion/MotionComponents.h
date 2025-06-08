@@ -41,7 +41,7 @@ namespace epl
 	{ 
 		Vector3 value; 
 		explicit Gravity(const Vector3& v) : value(v) {}
-		static constexpr Vector3 Earth() { return { 0.f, -9.81f, 0.f }; }
+		static constexpr Vector3 earth() { return { 0.f, -9.81f, 0.f }; }
 	};
 
 
@@ -49,10 +49,10 @@ namespace epl
 	{
 		float mass = 0.f;
 		float inverseMass = 0.f;
-		Mass(float m)
+		Mass(float mass_)
 		{
-			assert(m > 0.f && "Mass has to be grater than zero.");
-			mass = m;
+			assert(mass_ > 0.f && "Mass has to be grater than zero.");
+			mass = mass_;
 			inverseMass = 1.f / mass;
 		}
 	};

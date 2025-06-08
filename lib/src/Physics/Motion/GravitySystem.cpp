@@ -1,4 +1,4 @@
-#include <Physics/GravitySystem.h>
+#include <Physics/Motion/GravitySystem.h>
 
 namespace epl
 {

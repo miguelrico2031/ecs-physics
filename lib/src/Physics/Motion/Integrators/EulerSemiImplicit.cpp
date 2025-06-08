@@ -1,5 +1,6 @@
-#include <Physics/Integrators/EulerSemiImplicit.h>
+#include <Physics/Motion/Integrators/EulerSemiImplicit.h>
 #include <ECS/Registry.h>
+#include <Physics/Motion/MotionComponents.h>
 
 namespace epl
 {
@@ -45,7 +46,8 @@ namespace epl
 		for (const auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
 		{
 			Rotation& rotation = registry.getComponent<Rotation>(entity);
-			Quaternion deltaRotation = Quaternion{ 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z } * rotation.value;
+			Quaternion deltaRotation = 
+				Quaternion{ 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z } * rotation.value;
 			rotation.value += deltaRotation * (0.5f * dt);
 			rotation.value = Quaternion::normalize(rotation.value);
 		}

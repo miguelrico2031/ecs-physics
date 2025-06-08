@@ -1,5 +1,5 @@
 #pragma once
-#include <cmath>
+//#include <cmath>
 
 namespace epl::Math
 {
@@ -27,5 +27,10 @@ namespace epl::Math
 	inline constexpr float sqrt(float x) noexcept
 	{
 		return x > 0.f ? sqrtNewtonRaphson(x, x, 0.f) : 0.f;
+	}
+
+	inline constexpr float clamp(float value, float min, float max) noexcept
+	{
+		return value < min ? min : (value > max ? max : value);
 	}
 }

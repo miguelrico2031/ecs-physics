@@ -1,9 +1,9 @@
 #pragma once
-#include "IntegrationSystem.h"
+#include "IIntegrationSystem.h"
 
 namespace epl
 {
-	class EulerSemiImplicit : public IntegrationSystem
+	class EulerSemiImplicit : public IIntegrationSystem
 	{
 	public:
 		EulerSemiImplicit() = default;

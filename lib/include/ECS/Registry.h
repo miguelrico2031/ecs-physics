@@ -63,6 +63,15 @@ namespace epl
 			return pool->add(entity, std::forward<Args>(args)...);
 		}
 
+		template <class Component_T, typename... Args>
+		bool tryAddComponent(Entity entity, Args&&... args)
+		{
+			auto* pool = poolPtr<Component_T>();
+			if (pool->has(entity)) return false;
+			pool->add(entity, std::forward<Args>(args)...);
+			return true;
+		}
+
 		template<class Component_T>
 		void removeComponent(Entity entity)
 		{
@@ -92,14 +101,14 @@ namespace epl
 		}
 
 		template<class Component_T>
-		std::optional<Component_T&> getComponentOptional(Entity entity)
+		std::optional<Component_T&> tryGetComponent(Entity entity)
 		{
 			auto* pool = poolPtr<Component_T>();
 			return pool->getOptional(entity);
 		}
 
 		template<class Component_T>
-		const std::optional<const Component_T&> getComponentOptional(Entity entity) const
+		const std::optional<const Component_T&> tryGetComponent(Entity entity) const
 		{
 			auto* pool = poolPtr<Component_T>();
 			return pool->getOptional(entity);

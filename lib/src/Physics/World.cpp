@@ -1,12 +1,13 @@
 #include <Physics/World.h>
-#include <Physics/Integrators/EulerSemiImplicit.h>
-
+#include <Physics/Motion/Integrators/EulerSemiImplicit.h>
+#include <Physics/Collision/Detection/DoubleIteration.h>
 namespace epl
 {
 	World::World(size_t maxEntities)
 		: m_registry(std::make_shared<Registry>(maxEntities)),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
-		m_gravitySystem(std::make_unique<GravitySystem>())
+		m_gravitySystem(std::make_unique<GravitySystem>()),
+		m_collisionDetectionSystem(std::make_unique<DoubleIteration>())
 	{
 		registerPhysicsComponents();
 	}
@@ -14,7 +15,8 @@ namespace epl
 	World::World(std::shared_ptr<Registry> registry)
 		: m_registry(registry),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
-		m_gravitySystem(std::make_unique<GravitySystem>())
+		m_gravitySystem(std::make_unique<GravitySystem>()),
+		m_collisionDetectionSystem(std::make_unique<DoubleIteration>())
 	{
 		registerPhysicsComponents();
 	}
@@ -52,6 +54,7 @@ namespace epl
 
 		for (size_t i = 0; i < substeps; i++)
 		{
+			m_collisionDetectionSystem->detectCollisions(*m_registry);
 			m_gravitySystem->applyGravity(*m_registry);
 			m_integrationSystem->integrate(*m_registry, timeStepPerSubstep);
 		}
@@ -69,5 +72,10 @@ namespace epl
 		m_registry->registerComponentType<TorqueSum>();
 		m_registry->registerComponentType<Gravity>();
 		m_registry->registerComponentType<Kinematic>();
+
+
+		m_registry->registerComponentType<SphereCollider>();
+		m_registry->registerComponentType<AABBCollider>();
+		m_registry->registerComponentType<IsColliding>();
 	}
 }
