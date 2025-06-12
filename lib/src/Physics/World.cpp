@@ -6,6 +6,7 @@ namespace epl
 {
 	World::World(size_t maxEntities, float damping)
 		: m_registry(std::make_shared<Registry>(maxEntities)),
+		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<DoubleIteration>()),
@@ -14,10 +15,12 @@ namespace epl
 	{
 		m_collisions.reserve(maxEntities / 2);
 		registerPhysicsComponents();
+		registerBuiltInColliders();
 	}
 
 	World::World(std::shared_ptr<Registry> registry, float damping)
 		: m_registry(registry),
+		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<DoubleIteration>()),
@@ -25,6 +28,7 @@ namespace epl
 		m_damping(damping)
 	{
 		m_collisions.reserve(m_registry->getMaxEntities() / 2);
+		registerBuiltInColliders();
 		registerPhysicsComponents();
 	}
 
@@ -67,19 +71,19 @@ namespace epl
 			m_integrationSystem->integrate(*m_registry, timeStepPerSubstep, m_damping);
 			//detect collisions
 			m_collisions.clear();
-			m_collisionDetectionSystem->detectCollisions(*m_registry, m_collisions);
+			m_collisionDetectionSystem->detectCollisions(*m_registry, *m_colliderRegistry, m_collisions);
 			//solve collisions
 		}
 	}
 
 	bool World::raycast(const Ray& ray, RayHit& hit) const
 	{
-		return m_raycastSystem->raycast(ray, *m_registry, hit);
+		return m_raycastSystem->raycast(ray, *m_registry, *m_colliderRegistry, hit);
 	}
 
 	void World::raycastMultiple(const Ray& ray, std::vector<RayHit>& hits, size_t maxHits) const
 	{
-		return m_raycastSystem->raycastMultiple(ray, *m_registry, hits, maxHits);
+		return m_raycastSystem->raycastMultiple(ray, *m_registry, *m_colliderRegistry, hits, maxHits);
 	}
 
 
@@ -98,6 +102,18 @@ namespace epl
 
 		m_registry->registerComponentType<SphereCollider>();
 		m_registry->registerComponentType<AABBCollider>();
-		m_registry->registerComponentType<IsColliding>();
+		//m_registry->registerComponentType<IsColliding>();
+	}
+
+	void World::registerBuiltInColliders()
+	{
+		m_colliderRegistry->registerColliderType<SphereCollider>();
+		m_colliderRegistry->registerColliderType<AABBCollider>();
+
+		m_colliderRegistry->registerCollisionCheck<SphereCollider, SphereCollider>(SphereColliderFuncs::isCollidingSphereSphere);
+		m_colliderRegistry->registerCollisionCheck<AABBCollider, AABBCollider>(AABBColliderFuncs::isCollidingAABBAABB);
+		m_colliderRegistry->registerCollisionCheck<SphereCollider, AABBCollider>(SphereColliderFuncs::isCollidingSphereAABB);
+		m_colliderRegistry->registerRayIntersectionCheck<SphereCollider>(SphereColliderFuncs::isIntersectingSphere);
+		m_colliderRegistry->registerRayIntersectionCheck<AABBCollider>(AABBColliderFuncs::isIntersectingAABB);
 	}
 }

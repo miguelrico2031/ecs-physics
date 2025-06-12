@@ -1,88 +1,44 @@
 #include <Physics/Collision/Detection/DoubleIteration.h>
 #include <ECS/Registry.h>
-#include <Physics/Collision/CollidersUtil.h>
+//#include <Physics/Collision/CollidersUtil.h>
 #include <Physics/Motion/MotionComponents.h>
+#include <Physics/Colliders/ColliderRegistry.h>
 
 namespace epl
 {
-	void DoubleIteration::detectCollisions(Registry& reg, std::vector<Collision>& collisions)
+	void DoubleIteration::detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions)
 	{
-		resetCollisionFlags(reg);
-		detectSphereSphereCollisions(reg, collisions);
-		detectAABBAABBCollisions(reg, collisions);
-		detectSphereAABBCollisions(reg, collisions);
-	}
+		const auto& allColliderTypes = colliderReg.getAllTypes();
 
-	void DoubleIteration::resetCollisionFlags(Registry& reg)
-	{
-		for (auto [e, _] : reg.iterate<IsColliding>())
+		for (size_t i = 0; i < allColliderTypes.size(); i++)
 		{
-			reg.removeComponent<IsColliding>(e);
-		}
-	}
-
-	void DoubleIteration::detectSphereSphereCollisions(Registry& reg, std::vector<Collision>& collisions)
-	{
-		for (const auto& [e1, col1] : reg.iterate<SphereCollider>())
-		{
-			for (const auto& [e2, col2] : reg.iterate<SphereCollider>())
+			auto& colliderType1 = allColliderTypes[i];
+			for (size_t j = i; j < allColliderTypes.size(); j++)
 			{
-				if (e1 >= e2) continue;
-
-				Vector3 p1 = reg.getComponent<Position>(e1).value;
-				Vector3 p2 = reg.getComponent<Position>(e2).value;
-				Vector3 normal;
-				float depth;
-				if (CollidersUtil::isColliding(col1, col2, p1, p2, normal, depth))
+				auto& colliderType2 = allColliderTypes[j];
+				const CollisionCheck* collisionCheckPtr = colliderReg.getCollisionCheck(colliderType1.id, colliderType2.id);
+				if (!collisionCheckPtr)
 				{
-					collisions.emplace_back(Collision::Type::SphereSphere, e1, e2, normal, depth);
-					reg.addOrSetComponent<IsColliding>(e1);
-					reg.addOrSetComponent<IsColliding>(e2);
+					continue;
 				}
-			}
-		}
-	}
+				const CollisionCheck& collisionCheckFunc = *collisionCheckPtr;
 
-	void DoubleIteration::detectAABBAABBCollisions(Registry& reg, std::vector<Collision>& collisions)
-	{
-		for (const auto& [e1, col1] : reg.iterate<AABBCollider>())
-		{
-			for (const auto& [e2, col2] : reg.iterate<AABBCollider>())
-			{
-				if (e1 >= e2) continue;
-
-				Vector3 p1 = reg.getComponent<Position>(e1).value;
-				Vector3 p2 = reg.getComponent<Position>(e2).value;
-				Vector3 normal;
-				float depth;
-				if (CollidersUtil::isColliding(col1, col2, p1, p2, normal, depth))
-				{
-					collisions.emplace_back(Collision::Type::AABBAABB, e1, e2, normal, depth);
-					reg.addOrSetComponent<IsColliding>(e1);
-					reg.addOrSetComponent<IsColliding>(e2);
-				}
-			}
-		}
-	}
-
-	void DoubleIteration::detectSphereAABBCollisions(Registry& reg, std::vector<Collision>& collisions)
-	{
-		for (const auto& [e1, col1] : reg.iterate<SphereCollider>())
-		{
-			for (const auto& [e2, col2] : reg.iterate<AABBCollider>())
-			{
-				if (e1 >= e2) continue;
-
-				Vector3 p1 = reg.getComponent<Position>(e1).value;
-				Vector3 p2 = reg.getComponent<Position>(e2).value;
-				Vector3 normal;
-				float depth;
-				if (CollidersUtil::isColliding(col1, col2, p1, p2, normal, depth))
-				{
-					collisions.emplace_back(Collision::Type::SphereAABB, e1, e2, normal, depth);
-					reg.addOrSetComponent<IsColliding>(e1);
-					reg.addOrSetComponent<IsColliding>(e2);
-				}
+				
+				colliderType1.forEachColliderOfThisType(reg, [&](Entity e1, const BaseCollider& col1)
+					{
+						colliderType2.forEachColliderOfThisType(reg, [&](Entity e2, const BaseCollider& col2)
+							{
+								if (e1 >= e2) return;
+								Vector3 p1 = reg.getComponent<Position>(e1).value;
+								Vector3 p2 = reg.getComponent<Position>(e2).value;
+								Vector3 normal;
+								float depth;
+								if (collisionCheckFunc(col1, col2, p1, p2, normal, depth))
+								{
+									collisions.emplace_back(e1, e2, normal, depth);
+								}
+							});
+					});
 			}
 		}
 	}

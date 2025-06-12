@@ -1,12 +1,23 @@
 #pragma once
-//#include <cmath>
-
+#include <limits>
 namespace epl::Math
 {
 	inline constexpr float epsilon() noexcept
 	{
 		return 0.0001f;
 	}
+
+	inline constexpr float Infinity() noexcept
+	{
+		return std::numeric_limits<float>::max();
+	}
+
+	inline constexpr float NegativeInfinity() noexcept
+	{
+		return std::numeric_limits<float>::min();
+	}
+
+
 	inline constexpr float abs(float value) noexcept
 	{
 		return value < 0.0f ? -value : value;

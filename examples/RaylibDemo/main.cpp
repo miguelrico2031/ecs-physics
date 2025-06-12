@@ -3,9 +3,8 @@
 #include <random>
 #include <cmath>
 #include <iostream>
-#include <Physics/Raycast/Ray.h>
 
-
+struct IsColliding {};
 struct CastedRay
 {
 	Ray ray;
@@ -28,7 +27,7 @@ void togglePause();
 void toggleGravity(epl::Registry& reg);
 void applyRandomUpForce(epl::Registry& reg);
 void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple);
-
+void addIsColliding(epl::World& world);
 
 inline static Vector3 toVector3(const epl::Vector3& v) { return Vector3{ v.x, v.y, v.z }; }
 inline static epl::Vector3 toVector3(const Vector3& v) { return epl::Vector3{ v.x, v.y, v.z }; }
@@ -61,6 +60,7 @@ int main()
 
 
 
+	reg.registerComponentType<IsColliding>();
 	reg.registerComponentType<CastedRay>();
 	reg.registerComponentType<RayHitPoint>();
 
@@ -121,17 +121,6 @@ int main()
 				raycastAtMousePos(world, camera, true);
 			}
 		}
-		//if(IsKeyPressed(KEY_R))
-		//{
-		//	for (const auto& collision : world.m_collisions)
-		//	{
-		//		epl::Position& pos1 = reg.getComponent<epl::Position>(collision.entity1);
-		//		epl::Position& pos2 = reg.getComponent<epl::Position>(collision.entity2);
-		//		epl::Vector3 correction = epl::Vector3::normalize(collision.normal) * collision.depth;
-		//		pos1.value -= correction;
-		//		pos2.value += correction;
-		//	}
-		//}
 
 		while (accumulator >= fixedDelta)
 		{
@@ -143,13 +132,14 @@ int main()
 		}
 		UpdateCamera(&camera, CAMERA_FREE);
 
+		addIsColliding(world);
 
 		BeginDrawing();
 		ClearBackground(BLACK);
 
 		BeginMode3D(camera);
-		renderColliders(reg);
 		renderCollisionNormals(world);
+		renderColliders(reg);
 		renderRaysAndHits(reg);
 		DrawGrid(50, 1.0f);
 		EndMode3D();
@@ -167,13 +157,13 @@ void renderColliders(const epl::Registry& reg)
 {
 	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
 	{
-		Color color = reg.hasComponent<epl::IsColliding>(entity) ? GREEN : RED;
+		Color color = reg.hasComponent<IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
 		DrawSphereWires({ position.x, position.y, position.z }, collider.radius, 8, 10, color);
 	}
 	for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
-		Color color = reg.hasComponent<epl::IsColliding>(entity) ? GREEN : RED;
+		Color color = reg.hasComponent<IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
 		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
@@ -308,6 +298,19 @@ void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple)
 		{
 			reg.removeComponent<RayHitPoint>(rayHitPointEntity);
 		}
+	}
+}
+
+void addIsColliding(epl::World& world)
+{
+	for (auto& [e, isCol] : world.getRegistry().iterate<IsColliding>())
+	{
+		world.getRegistry().removeComponent<IsColliding>(e);
+	}
+	for (const auto& collision : world.m_collisions)
+	{
+		world.getRegistry().addOrSetComponent<IsColliding>(collision.entity1);
+		world.getRegistry().addOrSetComponent<IsColliding>(collision.entity2);
 	}
 }
 

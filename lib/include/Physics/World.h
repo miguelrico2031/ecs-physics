@@ -3,7 +3,9 @@
 #include <Physics/Motion/MotionComponents.h>
 #include <Physics/Motion/GravitySystem.h>
 #include <Physics/Motion/Integrators/IIntegrationSystem.h>
-#include <Physics/Collision/ColliderComponents.h>
+#include <Physics/Colliders/ColliderRegistry.h>
+#include <Physics/Colliders/SphereCollider.h>
+#include <Physics/Colliders/AABBCollider.h>
 #include <Physics/Collision/Detection/ICollisionDetectionSystem.h>
 #include <Physics/Collision/Collision.h>
 #include <Physics/Raycast/IRaycastSystem.h>
@@ -33,8 +35,10 @@ namespace epl
 
 	private:
 		void registerPhysicsComponents();
+		void registerBuiltInColliders();
 	private:
 		std::shared_ptr<Registry> m_registry;
+		std::unique_ptr<ColliderRegistry> m_colliderRegistry;
 		std::unique_ptr<IIntegrationSystem> m_integrationSystem;
 		std::unique_ptr<GravitySystem> m_gravitySystem;
 		std::unique_ptr<ICollisionDetectionSystem> m_collisionDetectionSystem;

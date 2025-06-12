@@ -1,38 +1,53 @@
-#include <Physics/Raycast/RaycastUtil.h>
-
+#pragma once
+#include <Physics/Colliders/AABBCollider.h>
+#include <Physics/Raycast/Ray.h>
+#include <Physics/Raycast/RayHit.h>
 namespace epl
 {
-
-	bool RaycastUtil::isIntersecting(const Ray& ray, const SphereCollider& collider, Vector3 position, RayHit& hit)
+	bool AABBColliderFuncs::isCollidingAABBAABB(const AABBCollider& c1, const AABBCollider& c2, const Vector3& p1, const Vector3& p2,
+		Vector3& normal, float& depth)
 	{
-		position += collider.offset;
-		Vector3 direction = position - ray.origin; //from ray origin to sphere center
-		float projected = Vector3::dot(direction, ray.direction); //direction projected in the ray direction
+		Vector3 pos1 = p1 + c1.offset;
+		Vector3 pos2 = p2 + c2.offset;
+		Vector3 min1 = pos1 - c1.halfSize;
+		Vector3 max1 = pos1 + c1.halfSize;
+		Vector3 min2 = pos2 - c2.halfSize;
+		Vector3 max2 = pos2 + c2.halfSize;
 
-		if (projected < 0.f)
+		//return (min1.x <= max2.x && max1.x >= min2.x) &&
+		//	(min1.y <= max2.y && max1.y >= min2.y) &&
+		//	(min1.z <= max2.z && max1.z >= min2.z);
+
+		Vector3 overlap = Vector3::min(max1, max2) - Vector3::max(min1, min2);
+
+		if (overlap.x <= 0 || overlap.y <= 0 || overlap.z <= 0)
 		{
-			return false; //the sphere is behind the ray
+			return false;
 		}
 
-		Vector3 closestPointInsideRay = ray.origin + (ray.direction * projected);
-
-		float distanceToSphereCenter = Vector3::distance(closestPointInsideRay, position);
-
-		if (distanceToSphereCenter > collider.radius)
+		float minOverlap = overlap.x;
+		normal = { 1, 0, 0 };
+		if (overlap.y < minOverlap)
 		{
-			return false; //closest point is outside the sphere
+			minOverlap = overlap.y;
+			normal = { 0, 1, 0 };
+		}
+		if (overlap.z < minOverlap)
+		{
+			minOverlap = overlap.z;
+			normal = { 0, 0, 1 };
 		}
 
-		float offset = Math::sqrt((collider.radius * collider.radius) - (distanceToSphereCenter * distanceToSphereCenter));
-		//the 2 points are at ray distance = projected + -offset, the closest one is the smallest (-)
-		hit.distanceFromRayOrigin = projected - offset;
-		hit.point = ray.origin + (ray.direction * hit.distanceFromRayOrigin);
-		hit.colliderType = ColliderType::Sphere;
-		//this method does not assign the entity to the RayHit struct
+		Vector3 delta = pos2 - pos1;
+		if (Vector3::dot(delta, normal) < 0)
+		{
+			normal = -normal; // Make sure normal points from c1 to c2
+		}
+		depth = minOverlap;
 		return true;
 	}
 
-	bool RaycastUtil::isIntersecting(const Ray& ray, Vector3 position, Vector3 halfSize, RayHit& hit)
+	bool AABBColliderFuncs::isIntersectingBox(const Ray& ray, const Vector3& position, const Vector3& halfSize, RayHit& hit)
 	{
 		Vector3 minPos = position - halfSize;
 		Vector3 maxPos = position + halfSize;
@@ -97,9 +112,8 @@ namespace epl
 		return true;
 	}
 
-	bool RaycastUtil::isIntersecting(const Ray& ray, const AABBCollider& collider, Vector3 position, RayHit& hit)
+	bool AABBColliderFuncs::isIntersectingAABB(const Ray& ray, const AABBCollider& collider, const Vector3& position, RayHit& hit)
 	{
-		return isIntersecting(ray, position + collider.offset, collider.halfSize, hit);
+		return isIntersectingBox(ray, position + collider.offset, collider.halfSize, hit);
 	}
 }
-
