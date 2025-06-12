@@ -15,10 +15,10 @@ namespace epl
 		Vector3 value; 
 		LinearVelocity(const Vector3& v) : value(v) {}
 	};
-	struct ForceSum
-	{ 
+	struct Force
+	{
 		Vector3 value; 
-		ForceSum(const Vector3& v) : value(v) {}
+		Force(const Vector3& v) : value(v) {}
 	};
 
 	struct Rotation
@@ -31,10 +31,10 @@ namespace epl
 		Vector3 value; 
 		AngularVelocity(const Vector3& v) : value(v) {}
 	};
-	struct TorqueSum
+	struct Torque
 	{ 
 		Vector3 value; 
-		TorqueSum(const Vector3& v) : value(v) {}
+		Torque(const Vector3& v) : value(v) {}
 	};
 
 	struct Gravity
@@ -51,9 +51,11 @@ namespace epl
 		float inverseMass = 0.f;
 		Mass(float mass_)
 		{
-			assert(mass_ > 0.f && "Mass has to be grater than zero.");
-			mass = mass_;
-			inverseMass = 1.f / mass;
+			if (!Math::equalsZero(mass_))
+			{
+				mass = mass_;
+				inverseMass = 1.f / mass;
+			}
 		}
 	};
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Math.h"
+#include <Math/Math.h>
 namespace epl
 {
 	struct Quaternion

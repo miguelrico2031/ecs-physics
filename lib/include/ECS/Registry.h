@@ -1,5 +1,5 @@
 #pragma once
-#include "ComponentPool.h"
+#include <ECS/ComponentPool.h>
 #include <queue>
 #include <memory>
 
@@ -15,6 +15,8 @@ namespace epl
 		}
 
 		~Registry() = default;
+
+		size_t getMaxEntities() const { return m_maxEntities; }
 
 		// Creates and returns a new empty entity.
 		Entity createEntity()
@@ -64,12 +66,12 @@ namespace epl
 		}
 
 		template <class Component_T, typename... Args>
-		bool tryAddComponent(Entity entity, Args&&... args)
+		Component_T& addOrSetComponent(Entity entity, Args&&... args)
 		{
 			auto* pool = poolPtr<Component_T>();
-			if (pool->has(entity)) return false;
-			pool->add(entity, std::forward<Args>(args)...);
-			return true;
+			return pool->has(entity)
+				? pool->set(entity, std::forward<Args>(args)...)
+				: pool->add(entity, std::forward<Args>(args)...);
 		}
 
 		template<class Component_T>

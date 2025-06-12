@@ -3,17 +3,21 @@
 
 namespace epl::Math
 {
+	inline constexpr float epsilon() noexcept
+	{
+		return 0.0001f;
+	}
 	inline constexpr float abs(float value) noexcept
 	{
 		return value < 0.0f ? -value : value;
 	}
 
-	inline constexpr bool equals(float a, float b, float epsilon = 0.0005f) noexcept
+	inline constexpr bool equals(float a, float b, float epsilon = 0.0001f) noexcept
 	{
 		return abs(a - b) < epsilon;
 	}
 
-	inline constexpr bool equalsZero(float a, float epsilon = 0.0005f) noexcept
+	inline constexpr bool equalsZero(float a, float epsilon = 0.0001f) noexcept
 	{
 		return equals(a, 0.0f, epsilon);
 	}
@@ -32,5 +36,15 @@ namespace epl::Math
 	inline constexpr float clamp(float value, float min, float max) noexcept
 	{
 		return value < min ? min : (value > max ? max : value);
+	}
+
+	inline constexpr float max(float a, float b) noexcept
+	{
+		return a > b ? a : b;
+	}
+
+	inline constexpr float min(float a, float b) noexcept
+	{
+		return a < b ? a : b;
 	}
 }

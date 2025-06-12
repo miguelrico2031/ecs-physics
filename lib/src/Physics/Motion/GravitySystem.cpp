@@ -6,9 +6,9 @@ namespace epl
 	{
 		for (const auto [entity, gravity] : registry.iterate<Gravity>())
 		{
-			ForceSum& forceSum = registry.getComponent <ForceSum>(entity);
+			Force& force = registry.getComponent <Force>(entity);
 			const Mass& mass = registry.getComponent<Mass>(entity);
-			forceSum.value += gravity.value * mass.mass;
+			force.value += gravity.value * mass.mass;
 		}
 	}
 }

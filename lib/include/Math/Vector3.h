@@ -1,5 +1,5 @@
 #pragma once
-#include "Math.h"
+#include <Math/Math.h>
 #include <iostream>
 
 namespace epl
@@ -112,6 +112,21 @@ namespace epl
 		static inline constexpr Vector3 clamp(const Vector3& v, const Vector3& min, const Vector3& max) noexcept
 		{
 			return { Math::clamp(v.x, min.x, max.x), Math::clamp(v.y, min.y, max.y), Math::clamp(v.z, min.z, max.z) };
+		}
+
+		static inline constexpr Vector3 max(const Vector3& a, const Vector3& b) noexcept
+		{
+			return { Math::max(a.x, b.x), Math::max(a.y, b.y), Math::max(a.z, b.z) };
+		}
+
+		static inline constexpr Vector3 min(const Vector3& a, const Vector3& b) noexcept
+		{
+			return { Math::min(a.x, b.x), Math::min(a.y, b.y), Math::min(a.z, b.z) };
+		}
+
+		static inline constexpr Vector3 abs(const Vector3& v) noexcept
+		{
+			return { Math::abs(v.x), Math::abs(v.y), Math::abs(v.z) };
 		}
 
 		friend std::ostream& operator<<(std::ostream& out, const Vector3& v);

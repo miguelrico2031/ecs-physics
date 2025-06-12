@@ -7,6 +7,6 @@ namespace epl
 	{
 	public:
 		virtual ~IIntegrationSystem() = default;
-		virtual void integrate(Registry& registry, float dt) = 0;
+		virtual void integrate(Registry& registry, float dt, float damping) = 0;
 	};
 }

@@ -1,55 +1,59 @@
 #include <Physics/Motion/Integrators/EulerSemiImplicit.h>
 #include <ECS/Registry.h>
 #include <Physics/Motion/MotionComponents.h>
+#include <cmath>
 
 namespace epl
 {
-	void EulerSemiImplicit::integrate(Registry& registry, float dt)
+	void EulerSemiImplicit::integrate(Registry& registry, float dt, float damping)
 	{
-		integrateLinearVelocity(registry, dt);
-		integratePosition(registry, dt);
-		integrateAngularVelocity(registry, dt);
-		integrateRotation(registry, dt);
+		float currentStepDampingFactor = powf(1.f - damping, dt);
+		integrateLinearAcceleration(registry, dt);
+		integrateLinearVelocity(registry, dt, currentStepDampingFactor);
+		integrateAngularAcceleration(registry, dt);
+		integrateAngularVelocity(registry, dt, currentStepDampingFactor);
 	}
 
-	void EulerSemiImplicit::integrateLinearVelocity(Registry& registry, float dt)
+	void EulerSemiImplicit::integrateLinearAcceleration(Registry& registry, float dt)
 	{
 		for (auto [entity, velocity] : registry.iterate<LinearVelocity>())
 		{
-			ForceSum& forceSum = registry.getComponent<ForceSum>(entity);
+			Force& force = registry.getComponent<Force>(entity);
 			const Mass& mass = registry.getComponent<Mass>(entity);
-			velocity.value += forceSum.value * (mass.inverseMass * dt);
-			forceSum.value = Vector3::zero();
+			velocity.value += force.value * (mass.inverseMass * dt);
+			force.value = Vector3::zero(); // reset the force sum in the same iteration
 		}
 	}
-	void EulerSemiImplicit::integratePosition(Registry& registry, float dt)
+	void EulerSemiImplicit::integrateLinearVelocity(Registry& registry, float dt, float damping)
 	{
-		for (const auto [entity, velocity] : registry.iterate<LinearVelocity>())
+		for (auto [entity, velocity] : registry.iterate<LinearVelocity>())
 		{
 			Position& position = registry.getComponent<Position>(entity);
 			position.value += velocity.value * dt;
+			velocity.value *= damping; // apply damping in the same iteration
 		}
 	}
-	void EulerSemiImplicit::integrateAngularVelocity(Registry& registry, float dt)
+	void EulerSemiImplicit::integrateAngularAcceleration(Registry& registry, float dt)
 	{
 		//TODO: inertia
 		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
 		{
-			TorqueSum& torqueSum = registry.getComponent<TorqueSum>(entity);
-			angularVelocity.value += torqueSum.value * dt;
-			torqueSum.value = Vector3::zero();
+			Torque& torque = registry.getComponent<Torque>(entity);
+			angularVelocity.value += torque.value * dt;
+			torque.value = Vector3::zero();
 		}
 	}
 
-	void EulerSemiImplicit::integrateRotation(Registry& registry, float dt)
+	void EulerSemiImplicit::integrateAngularVelocity(Registry& registry, float dt, float damping)
 	{
-		for (const auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
+		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
 		{
 			Rotation& rotation = registry.getComponent<Rotation>(entity);
 			Quaternion deltaRotation = 
 				Quaternion{ 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z } * rotation.value;
 			rotation.value += deltaRotation * (0.5f * dt);
 			rotation.value = Quaternion::normalize(rotation.value);
+			angularVelocity.value *= damping; // apply damping in the same iteration
 		}
 	}
 }

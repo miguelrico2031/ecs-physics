@@ -3,23 +3,38 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include <Physics/Raycast/Ray.h>
 
-struct Cube
+
+struct CastedRay
 {
-	Color color; Vector3 size;
-	Cube(Color c, Vector3 s) : color(c), size(s) {}
+	Ray ray;
+	bool hit;
+	CastedRay(Ray ray_, bool hit_) : ray(ray_), hit(hit_) {}
+};
+struct RayHitPoint
+{
+	Vector3 point;
+	RayHitPoint(Vector3 p) : point(p) {}
 };
 
-bool paused = false;
+static bool paused = false;
 
-void renderCubes(const epl::Registry& reg);
-void renderSphereColliders(const epl::Registry& reg);
-void renderAABBColliders(const epl::Registry& reg);
+void renderColliders(const epl::Registry& reg);
+void renderCollisionNormals(const epl::World& world);
+void renderRaysAndHits(const epl::Registry& reg);
 epl::Vector3 randomInUnitSphere();
 void togglePause();
 void toggleGravity(epl::Registry& reg);
 void applyRandomUpForce(epl::Registry& reg);
+void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple);
 
+
+inline static Vector3 toVector3(const epl::Vector3& v) { return Vector3{ v.x, v.y, v.z }; }
+inline static epl::Vector3 toVector3(const Vector3& v) { return epl::Vector3{ v.x, v.y, v.z }; }
+
+inline static Ray toRay(const epl::Ray& r) { return Ray{ toVector3(r.origin), toVector3(r.direction) }; }
+inline static epl::Ray toRay(const Ray& r) { return epl::Ray{ toVector3(r.position), toVector3(r.direction) }; }
 
 int main()
 {
@@ -36,7 +51,6 @@ int main()
 	camera.fovy = 45.f;
 	camera.projection = CAMERA_PERSPECTIVE;
 
-
 	constexpr int numBodies = 100;
 	constexpr epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	constexpr float spread = 5.f;
@@ -44,7 +58,14 @@ int main()
 
 	std::shared_ptr<epl::Registry> regPtr = std::make_shared<epl::Registry>(2048);
 	epl::Registry& reg = *regPtr;
-	reg.registerComponentType<Cube>();
+
+
+
+	reg.registerComponentType<CastedRay>();
+	reg.registerComponentType<RayHitPoint>();
+
+
+
 	epl::World world(regPtr);
 
 	for (size_t i = 0; i < numBodies; i++)
@@ -52,9 +73,7 @@ int main()
 		epl::Vector3 pos = startPos + randomInUnitSphere() * spread;
 		auto e = world.createDynamicBody(1, pos);
 
-		reg.addComponent<Cube>(e, RED, Vector3{ .5f, .5f, .5f });
-
-		if(i % 2 == 0)
+		if (i % 2 == 0)
 		{
 			reg.addComponent<epl::AABBCollider>(e, epl::Vector3{ .5f, .5f, .5f });
 		}
@@ -93,27 +112,49 @@ int main()
 			{
 				applyRandomUpForce(reg);
 			}
+			if (IsMouseButtonPressed(0))
+			{
+				raycastAtMousePos(world, camera, false);
+			}
+			else if (IsMouseButtonPressed(1))
+			{
+				raycastAtMousePos(world, camera, true);
+			}
 		}
+		//if(IsKeyPressed(KEY_R))
+		//{
+		//	for (const auto& collision : world.m_collisions)
+		//	{
+		//		epl::Position& pos1 = reg.getComponent<epl::Position>(collision.entity1);
+		//		epl::Position& pos2 = reg.getComponent<epl::Position>(collision.entity2);
+		//		epl::Vector3 correction = epl::Vector3::normalize(collision.normal) * collision.depth;
+		//		pos1.value -= correction;
+		//		pos2.value += correction;
+		//	}
+		//}
 
 		while (accumulator >= fixedDelta)
 		{
-			UpdateCamera(&camera, CAMERA_FREE);
 			if (!paused)
 			{
 				world.step(fixedDelta, 4);
 			}
 			accumulator -= fixedDelta;
 		}
+		UpdateCamera(&camera, CAMERA_FREE);
+
 
 		BeginDrawing();
 		ClearBackground(BLACK);
 
 		BeginMode3D(camera);
-		//renderCubes(reg);
-		renderSphereColliders(reg);
-		renderAABBColliders(reg);
+		renderColliders(reg);
+		renderCollisionNormals(world);
+		renderRaysAndHits(reg);
 		DrawGrid(50, 1.0f);
 		EndMode3D();
+		DrawText("+", GetScreenWidth() / 2, GetScreenHeight() / 2, 20, WHITE);
+		DrawFPS(10, 20);
 		EndDrawing();
 	}
 
@@ -121,33 +162,43 @@ int main()
 	return 0;
 }
 
-void renderCubes(const epl::Registry& reg)
-{
-	for (const auto& [entity, cube] : reg.iterate<Cube>())
-	{
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
-		DrawCube({ position.x, position.y, position.z }, cube.size.x, cube.size.y, cube.size.z, cube.color);
-	}
-}
 
-void renderSphereColliders(const epl::Registry& reg)
+void renderColliders(const epl::Registry& reg)
 {
-	for( const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
+	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
 	{
 		Color color = reg.hasComponent<epl::IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
-		DrawSphereWires({ position.x, position.y, position.z }, collider.radius, 10, 12, color);
+		DrawSphereWires({ position.x, position.y, position.z }, collider.radius, 8, 10, color);
 	}
-}
-
-void renderAABBColliders(const epl::Registry& reg)
-{
 	for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
 		Color color = reg.hasComponent<epl::IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
-		DrawCubeWires({ position.x, position.y, position.z }, 
+		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
+	}
+}
+
+void renderCollisionNormals(const epl::World& world)
+{
+	for (const auto& collision : world.m_collisions)
+	{
+		epl::Vector3 pos1 = world.getRegistry().getComponent<epl::Position>(collision.entity1).value;
+		//epl::Vector3 pos2 = world.getRegistry().getComponent<epl::Position>(collision.entity2).value;
+		DrawLine3D(toVector3(pos1), toVector3(pos1 + collision.normal * 2.f), YELLOW);
+	}
+}
+
+void renderRaysAndHits(const epl::Registry& reg)
+{
+	for (const auto [entity, ray] : reg.iterate<CastedRay>())
+	{
+		DrawRay(ray.ray, ray.hit ? BLUE : WHITE);
+	}
+	for (const auto [entity, hitPoint] : reg.iterate<RayHitPoint>())
+	{
+		DrawSphere(hitPoint.point, .2f, VIOLET);
 	}
 }
 
@@ -178,11 +229,11 @@ void toggleGravity(epl::Registry& reg)
 	{
 		if (gravityEnabled)
 		{
-			reg.getComponent<epl::Gravity>(entity).value = epl::Gravity::earth();
+			gravity.value = epl::Gravity::earth();
 		}
 		else
 		{
-			reg.getComponent<epl::Gravity>(entity).value = epl::Vector3::zero();
+			gravity.value = epl::Vector3::zero();
 			reg.getComponent<epl::LinearVelocity>(entity).value = epl::Vector3::zero();
 		}
 	}
@@ -193,11 +244,70 @@ void applyRandomUpForce(epl::Registry& reg)
 {
 	constexpr float forceUpFactor = 20.f;
 	constexpr float forceMagnitude = 4000.f;
-	for (auto [entity, forceSum] : reg.iterate<epl::ForceSum>())
+	for (auto [entity, forceSum] : reg.iterate<epl::Force>())
 	{
 		epl::Vector3 forceDirection = randomInUnitSphere();
 		forceDirection.y = epl::Math::abs(forceDirection.y) * forceUpFactor;
 		forceSum.value += epl::Vector3::normalize(forceDirection) * forceMagnitude;
+	}
+}
+
+void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple)
+{
+	epl::Registry& reg = world.getRegistry();
+	static epl::Entity rayEntity = reg.createEntity();
+	Vector2 mousePos = { GetScreenWidth() / 2.f,  GetScreenHeight() / 2.f };
+	Ray raylibRay = GetScreenToWorldRay(mousePos, camera);
+	epl::Ray ray = toRay(raylibRay);
+
+
+	if (multiple)
+	{
+		const size_t maxHits = 30;
+		static bool init = false;
+		static std::vector<epl::RayHit> hits;
+		static std::vector<epl::Entity> rayHitPointEntities;
+		if (!init)
+		{
+			init = true;
+			hits.reserve(maxHits);
+			rayHitPointEntities.reserve(maxHits);
+			for (size_t i = 0; i < maxHits; i++)
+			{
+				rayHitPointEntities.push_back(reg.createEntity());
+			}
+		}
+		for (size_t i = 0; i < hits.size(); i++)
+		{
+			epl::Entity e = rayHitPointEntities[i];
+			reg.removeComponent<RayHitPoint>(e);
+		}
+		hits.clear();
+		world.raycastMultiple(ray, hits, maxHits);
+		reg.addOrSetComponent<CastedRay>(rayEntity, raylibRay, !hits.empty());
+		for (size_t i = 0; i < hits.size(); i++)
+		{
+			epl::Entity e = rayHitPointEntities[i];
+			reg.addComponent<RayHitPoint>(e, toVector3(hits[i].point));
+		}
+	}
+
+	else
+	{
+		static epl::Entity rayHitPointEntity = reg.createEntity();
+		epl::RayHit rayHit;
+		bool hit = world.raycast(ray, rayHit);
+
+		reg.addOrSetComponent<CastedRay>(rayEntity, raylibRay, hit);
+
+		if (hit)
+		{
+			reg.addOrSetComponent<RayHitPoint>(rayHitPointEntity, toVector3(rayHit.point));
+		}
+		else if (reg.hasComponent<RayHitPoint>(rayHitPointEntity))
+		{
+			reg.removeComponent<RayHitPoint>(rayHitPointEntity);
+		}
 	}
 }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Entity.h"
+#include <ECS/Entity.h>
 #include <vector>
 #include <optional>
 #include <cassert>
@@ -36,6 +36,16 @@ namespace epl
 
 			m_highestEntityEver = std::max(m_highestEntityEver, static_cast<int64_t>(entity));
 
+			m_storage[entity].emplace(std::forward<Args>(args)...);
+			return m_storage[entity].value();
+		}
+
+		template <typename ...Args>
+		T& set(Entity entity, Args&&... args)
+		{
+			static_assert(std::is_constructible_v<T, Args...>, "Component cannot be constructed with the given arguments.");
+			assert(m_storage[entity].has_value() && "Cannot set non existent component.");
+			m_storage[entity].reset();
 			m_storage[entity].emplace(std::forward<Args>(args)...);
 			return m_storage[entity].value();
 		}

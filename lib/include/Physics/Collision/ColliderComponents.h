@@ -4,6 +4,12 @@
 #include <ECS/Entity.h>
 namespace epl
 {
+	enum class ColliderType
+	{
+		Sphere = 1,
+		AABB = 2
+	};
+
 	struct SphereCollider
 	{
 		float radius;
@@ -20,8 +26,5 @@ namespace epl
 			: halfSize(halfSize_), offset(offset_) {}
 	};
 
-	struct IsColliding
-	{
-		int a;
-	};
+	struct IsColliding {};
 }
