@@ -13,7 +13,7 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBOBB(const Registry& reg, const OBBCollider& c1, const OBBCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		std::cerr << "error: collision not implemented: isCollidingOBBOBB.\n";
+		//std::cerr << "error: collision not implemented: isCollidingOBBOBB.\n";
 		return false;
 	}
 
@@ -21,7 +21,7 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBAABB(const Registry& reg, const OBBCollider& c1, const AABBCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		std::cerr << "error: collision not implemented: isCollidingOBBAABB.\n";
+		//std::cerr << "error: collision not implemented: isCollidingOBBAABB.\n";
 		return false;
 	}
 
@@ -29,7 +29,7 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBSphere(const Registry& reg, const OBBCollider& c1, const SphereCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		std::cerr << "error: collision not implemented: isCollidingOBBSphere.\n";
+		//std::cerr << "error: collision not implemented: isCollidingOBBSphere.\n";
 		return false;
 	}
 

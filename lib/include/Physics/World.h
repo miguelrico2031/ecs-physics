@@ -20,19 +20,33 @@ namespace epl
 		World(size_t maxEntities, float damping = 0.f);
 		World(std::shared_ptr<Registry> registry, float damping = 0.f);
 
+#pragma region GETTERS_SETTERS
 		Registry& getRegistry() { return *m_registry; }
 		const Registry& getRegistry() const { return *m_registry; }
 
+		float getDamping() const { return m_damping; }
+		void setDamping(float damping) { m_damping = damping; }
+
+		size_t getMaxEntities() const { return m_registry->getMaxEntities(); }
+
+		const std::vector<Collision>& getAllCollisions() const { return m_collisions; }
+#pragma endregion
+
+#pragma region ENTITIES_CREATION
 		Entity createDynamicBody(float mass = 1.f, Vector3 position = Vector3::zero(), 
 			Quaternion rotation = Quaternion::identity(), Vector3 gravity = Gravity::earth());
 
 		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
+#pragma endregion
 
+#pragma region UPDATE_PHYSICS
 		void step(float timeStep, unsigned int substeps = 1);
+#pragma endregion
 
-
+#pragma region RAYCAST
 		bool raycast(const Ray& ray, RayHit& hit) const;
 		void raycastMultiple(const Ray& ray, std::vector<RayHit>& hits, size_t maxHits) const;
+#pragma endregion
 
 	private:
 		void registerPhysicsComponents();
@@ -44,7 +58,6 @@ namespace epl
 		std::unique_ptr<GravitySystem> m_gravitySystem;
 		std::unique_ptr<ICollisionDetectionSystem> m_collisionDetectionSystem;
 		std::unique_ptr<IRaycastSystem> m_raycastSystem;
-	public:
 		std::vector<Collision> m_collisions;
 		float m_damping;
 	};
