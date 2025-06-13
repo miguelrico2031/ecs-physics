@@ -127,17 +127,13 @@ void createBodies(epl::World& world)
 		epl::Vector3 pos = SimulationParams.startPos + randomInUnitSphere() * SimulationParams.spread;
 		auto e = world.createDynamicBody(1, pos);
 
-		if (i % 3 == 0)
-		{
-			reg.addComponent<epl::AABBCollider>(e, epl::Vector3{ .5f, .5f, .5f });
-		}
-		else if (i % 3 == 1)
+		if (i % 2 == 0)
 		{
 			reg.addComponent<epl::SphereCollider>(e, .5f);
 		}
 		else
 		{
-			reg.addComponent<epl::OBBCollider>(e, epl::Vector3{ .75f, .75f, .75f });
+			reg.addComponent<epl::BoxCollider>(e, epl::Vector3{ .75f, .75f, .75f });
 			auto angles = randomEulerAngles();
 			reg.getComponent<epl::Rotation>(e).value = epl::Quaternion::fromEulerAngles(angles);
 		}
@@ -201,14 +197,14 @@ void renderColliders(const epl::Registry& reg)
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
 		DrawSphereWires({ position.x, position.y, position.z }, collider.radius, 8, 10, color);
 	}
-	for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
+	/*for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
 		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
-	}
-	for (const auto& [entity, collider] : reg.iterate<epl::OBBCollider>())
+	}*/
+	for (const auto& [entity, collider] : reg.iterate<epl::BoxCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;

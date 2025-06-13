@@ -32,20 +32,45 @@ namespace epl
 		const std::vector<Collision>& getAllCollisions() const { return m_collisions; }
 #pragma endregion
 
-#pragma region ENTITIES_CREATION
-		Entity createDynamicBody(float mass = 1.f, Vector3 position = Vector3::zero(), 
-			Quaternion rotation = Quaternion::identity(), Vector3 gravity = Gravity::earth());
-
-		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
-#pragma endregion
-
 #pragma region UPDATE_PHYSICS
 		void step(float timeStep, unsigned int substeps = 1);
 #pragma endregion
 
-#pragma region RAYCAST
+#pragma region ENTITIES_CREATION_HELPERS
+		//creates an entity with all the necessary components to act as a dynamic rigid body
+		Entity createDynamicBody(float mass = 1.f, Vector3 position = Vector3::zero(), 
+			Quaternion rotation = Quaternion::identity(), Vector3 gravity = Gravity::earth());
+
+		//creates an entity with all the necessary components to act as a kinematic rigid body
+		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
+
+		//adds a sphere collider to a body and if it is dynamic, calculates it's inertia tensor
+		SphereCollider& addSphereColliderToBody(Entity entity, float radius, Vector3 offset = Vector3::zero());
+		//adds a box collider to a body and if it is dynamic, calculates it's inertia tensor
+		BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize, Vector3 offset = Vector3::zero());
+#pragma endregion
+
+#pragma region RAYCAST_HELPERS
 		bool raycast(const Ray& ray, RayHit& hit) const;
 		void raycastMultiple(const Ray& ray, std::vector<RayHit>& hits, size_t maxHits) const;
+#pragma endregion
+
+#pragma region FORCE_TORQUE_HELPERS
+		void addForce(Entity entity, Vector3 force);
+		void addForce(Force& forceComponent, Vector3 force);
+		//adds a force and calculates the torque created on that point
+		void addForceAtPoint(Entity entity, Vector3 force, Vector3 point);
+		void addAcceleration(Entity entity, Vector3 acceleration);
+		void addAcceleration(Force& forceComponent, Mass& massComponent, Vector3 acceleration);
+		void addTorque(Entity entity, Vector3 torque);
+		void addTorque(Torque& torqueComponent, Vector3 torque);
+#pragma endregion
+
+#pragma region COLLIDER_HELPERS
+		//changes the collider radius and updates the inertia tensor if this is adynamic body
+		void changeSphereColliderRadius(Entity entity, float newRadius);
+		//changes the collider size and updates the inertia tensor if this is adynamic body
+		void changeBoxColliderHalfSize(Entity entity, Vector3 newHalfSize);
 #pragma endregion
 
 	private:

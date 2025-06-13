@@ -29,4 +29,6 @@ namespace epl
 
 		bool isIntersectingOBB(const Registry& reg, const Ray& ray, const OBBCollider& collider, Entity entity, RayHit& hit);
 	}
+
+	using BoxCollider = OBBCollider; //default box collider to use in gameplay (AABB is used for broadphase and other internal calculations)
 }

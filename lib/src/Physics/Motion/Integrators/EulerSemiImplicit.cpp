@@ -39,7 +39,8 @@ namespace epl
 		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
 		{
 			Torque& torque = registry.getComponent<Torque>(entity);
-			angularVelocity.value += torque.value * dt;
+			InverseInertia& inverseInertia = registry.getComponent<InverseInertia>(entity);
+			angularVelocity.value += (inverseInertia.tensor * torque.value) * dt;
 			torque.value = Vector3::zero();
 		}
 	}
@@ -49,10 +50,13 @@ namespace epl
 		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
 		{
 			Rotation& rotation = registry.getComponent<Rotation>(entity);
-			Quaternion deltaRotation = 
-				Quaternion{ 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z } * rotation.value;
-			rotation.value += deltaRotation * (0.5f * dt);
+			
+			Quaternion deltaRotation = { 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z };
+			deltaRotation *= .5f * dt;
+			deltaRotation *= rotation.value;
+			rotation.value += deltaRotation;
 			rotation.value = Quaternion::normalize(rotation.value);
+
 			angularVelocity.value *= damping; // apply damping in the same iteration
 		}
 	}

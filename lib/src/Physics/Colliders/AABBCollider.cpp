@@ -100,7 +100,7 @@ namespace epl
 		}
 		Vector3 possibleIntersectionPoint = ray.origin + (ray.direction * possibleIntersectionDistance);
 
-		const float epsilon = Math::epsilon();
+		constexpr float epsilon = Math::epsilon();
 		if ((possibleIntersectionPoint.x + epsilon < minPos.x || possibleIntersectionPoint.x - epsilon > maxPos.x) ||
 			(possibleIntersectionPoint.y + epsilon < minPos.y || possibleIntersectionPoint.y - epsilon > maxPos.y) ||
 			(possibleIntersectionPoint.z + epsilon < minPos.z || possibleIntersectionPoint.z - epsilon > maxPos.z))
@@ -117,5 +117,17 @@ namespace epl
 	{
 		Position pos = reg.getComponent<Position>(entity);
 		return isIntersectingBox(ray, pos.value + collider.offset, collider.halfSize, hit);
+	}
+
+	Matrix3x3 AABBColliderFuncs::calculateInverseInertiaTensor(const Vector3& halfSize, float inverseMass)
+	{
+		Vector3 size = 2.f * halfSize;
+		Vector3 diagonal = Vector3{
+			(12.f * inverseMass) / (size.z * size.z + size.y * size.y),
+			(12.f * inverseMass) / (size.x * size.x + size.z * size.z),
+			(12.f * inverseMass) / (size.x * size.x + size.y * size.y)
+
+		};
+		return Matrix3x3(diagonal);
 	}
 }

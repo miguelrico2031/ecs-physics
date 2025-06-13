@@ -58,6 +58,32 @@ namespace epl
 		return e;
 	}
 
+	SphereCollider& World::addSphereColliderToBody(Entity entity, float radius, Vector3 offset)
+	{
+		auto& col = m_registry->addComponent<SphereCollider>(entity, radius, offset);
+		//inertia calc if dynamic
+		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		{
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, (*massOpt).inverseMass);
+			m_registry->addComponent<InverseInertia>(entity, invInertia);
+		}
+		return col;
+	}
+
+	BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize, Vector3 offset)
+	{
+		auto& col = m_registry->addComponent<BoxCollider>(entity, halfSize, offset);
+		//inertia calc if dynamic
+		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		{
+			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(halfSize, (*massOpt).inverseMass);
+			m_registry->addComponent<InverseInertia>(entity, invInertia);
+		}
+		return col;
+	}
+
+
+
 	void World::step(float timeStep, unsigned int substeps)
 	{
 		assert(substeps > 0 && "Substeps must be greater than zero.");
@@ -84,6 +110,72 @@ namespace epl
 	void World::raycastMultiple(const Ray& ray, std::vector<RayHit>& hits, size_t maxHits) const
 	{
 		return m_raycastSystem->raycastMultiple(ray, *m_registry, *m_colliderRegistry, hits, maxHits);
+	}
+
+
+	void World::addForce(Entity entity, Vector3 force)
+	{
+		m_registry->getComponent<Force>(entity).value += force;
+	}
+
+	void World::addForce(Force& forceComponent, Vector3 force)
+	{
+		forceComponent.value += force;
+	}
+
+	void World::addForceAtPoint(Entity entity, Vector3 force, Vector3 point)
+	{
+		m_registry->getComponent<Force>(entity).value += force;
+		Position position = m_registry->getComponent<Position>(entity);
+		Vector3 pointLocalPos = point - position.value;
+		Vector3 torque = Vector3::cross(pointLocalPos, force);
+		m_registry->getComponent<Torque>(entity).value += torque;
+	}
+
+	void World::addAcceleration(Entity entity, Vector3 acceleration)
+	{
+		float mass = m_registry->getComponent<Mass>(entity).mass;
+		m_registry->getComponent<Force>(entity).value += mass * acceleration;
+	}
+
+	void World::addAcceleration(Force& forceComponent, Mass& massComponent, Vector3 acceleration)
+	{
+		forceComponent.value += massComponent.mass * acceleration;
+	}
+
+	void World::addTorque(Entity entity, Vector3 torque)
+	{
+		m_registry->getComponent<Torque>(entity).value += torque;
+	}
+
+	void World::addTorque(Torque& torqueComponent, Vector3 torque)
+	{
+		torqueComponent.value += torque;
+	}
+
+
+	void World::changeSphereColliderRadius(Entity entity, float newRadius)
+	{
+		auto& col = m_registry->getComponent<SphereCollider>(entity);
+		col.radius = newRadius;
+		//update inertia tensor if dynamic
+		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		{
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(newRadius, (*massOpt).inverseMass);
+			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
+		}
+	}
+
+	void World::changeBoxColliderHalfSize(Entity entity, Vector3 newHalfSize)
+	{
+		auto& col = m_registry->getComponent<BoxCollider>(entity);
+		col.halfSize = newHalfSize;
+		//update inertia tensor if dynamic
+		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		{
+			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(newHalfSize, (*massOpt).inverseMass);
+			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
+		}
 	}
 
 
@@ -120,7 +212,5 @@ namespace epl
 		m_colliderRegistry->registerCollisionCheck<OBBCollider, AABBCollider>(OBBColliderFuncs::isCollidingOBBAABB);
 		m_colliderRegistry->registerCollisionCheck<OBBCollider, SphereCollider>(OBBColliderFuncs::isCollidingOBBSphere);
 		m_colliderRegistry->registerRayIntersectionCheck<OBBCollider>(OBBColliderFuncs::isIntersectingOBB);
-
-
 	}
 }

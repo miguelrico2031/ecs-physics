@@ -25,6 +25,9 @@ namespace epl
 		bool isCollidingSphereAABB(const Registry& reg, const SphereCollider& c1, const AABBCollider& c2, Entity e1, Entity e2, Collision& col);
 
 		bool isIntersectingSphere(const Registry& reg, const Ray& ray, const SphereCollider& collider, Entity entity, RayHit& hit);
+
+		Matrix3x3 calculateInverseInertiaTensor(float radius, float inverseMass);
+
 	}
 
 }

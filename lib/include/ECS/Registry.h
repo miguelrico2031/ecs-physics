@@ -103,14 +103,14 @@ namespace epl
 		}
 
 		template<class Component_T>
-		std::optional<Component_T&> tryGetComponent(Entity entity)
+		std::optional<Component_T>& tryGetComponent(Entity entity)
 		{
 			auto* pool = poolPtr<Component_T>();
 			return pool->getOptional(entity);
 		}
 
 		template<class Component_T>
-		const std::optional<const Component_T&> tryGetComponent(Entity entity) const
+		const std::optional<const Component_T>& tryGetComponent(Entity entity) const
 		{
 			auto* pool = poolPtr<Component_T>();
 			return pool->getOptional(entity);

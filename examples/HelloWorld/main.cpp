@@ -41,6 +41,5 @@ void unusedFunction()
 	epl::ComponentPool<int> pool(10);
 	pool.add(2, 90);
 	pool.get(2);
-	pool.getOptional(2);
 	pool.remove(2);
 }

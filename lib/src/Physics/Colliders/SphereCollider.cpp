@@ -113,4 +113,11 @@ namespace epl
 		//this method does not assign the entity to the RayHit struct
 		return true;
 	}
+
+
+	Matrix3x3 SphereColliderFuncs::calculateInverseInertiaTensor(float radius, float inverseMass)
+	{
+		float diagonal = (5 * inverseMass) / (2 * radius * radius);
+		return Matrix3x3(Vector3{diagonal, diagonal, diagonal});
+	}
 }
