@@ -1,9 +1,10 @@
 #pragma once
 #include <Physics/Colliders/BaseCollider.h>
-#include <Math/Vector3.h>
+
 
 namespace epl
 {
+	class Registry;
 	struct Ray;
 	struct RayHit;
 	struct AABBCollider;
@@ -19,13 +20,11 @@ namespace epl
 	namespace SphereColliderFuncs
 	{
 
-	bool isCollidingSphereSphere(const SphereCollider& c1, const SphereCollider& c2, const Vector3& p1, const Vector3& p2,
-		Vector3& normal, float& depth);
+		bool isCollidingSphereSphere(const Registry& reg, const SphereCollider& c1, const SphereCollider& c2, Entity e1, Entity e2, Collision& col);
 
-	bool isCollidingSphereAABB(const SphereCollider& c1, const AABBCollider& c2, const Vector3& p1, const Vector3& p2,
-		Vector3& normal, float& depth);
+		bool isCollidingSphereAABB(const Registry& reg, const SphereCollider& c1, const AABBCollider& c2, Entity e1, Entity e2, Collision& col);
 
-	bool isIntersectingSphere(const Ray& ray, const SphereCollider& collider, const Vector3& position, RayHit& hit);
+		bool isIntersectingSphere(const Registry& reg, const Ray& ray, const SphereCollider& collider, Entity entity, RayHit& hit);
 	}
 
 }

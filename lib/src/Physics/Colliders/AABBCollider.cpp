@@ -2,21 +2,22 @@
 #include <Physics/Colliders/AABBCollider.h>
 #include <Physics/Raycast/Ray.h>
 #include <Physics/Raycast/RayHit.h>
+#include <Physics/Motion/MotionComponents.h>
+#include <ECS/Registry.h>
 namespace epl
 {
-	bool AABBColliderFuncs::isCollidingAABBAABB(const AABBCollider& c1, const AABBCollider& c2, const Vector3& p1, const Vector3& p2,
-		Vector3& normal, float& depth)
+	bool AABBColliderFuncs::isCollidingAABBAABB(const Registry& reg, const AABBCollider& c1, const AABBCollider& c2, 
+		Entity e1, Entity e2, Collision& col)
 	{
-		Vector3 pos1 = p1 + c1.offset;
-		Vector3 pos2 = p2 + c2.offset;
+		Position p1 = reg.getComponent<Position>(e1);
+		Position p2 = reg.getComponent<Position>(e2);
+		Vector3 pos1 = p1.value + c1.offset;
+		Vector3 pos2 = p2.value + c2.offset;
 		Vector3 min1 = pos1 - c1.halfSize;
 		Vector3 max1 = pos1 + c1.halfSize;
 		Vector3 min2 = pos2 - c2.halfSize;
 		Vector3 max2 = pos2 + c2.halfSize;
 
-		//return (min1.x <= max2.x && max1.x >= min2.x) &&
-		//	(min1.y <= max2.y && max1.y >= min2.y) &&
-		//	(min1.z <= max2.z && max1.z >= min2.z);
 
 		Vector3 overlap = Vector3::min(max1, max2) - Vector3::max(min1, min2);
 
@@ -26,24 +27,24 @@ namespace epl
 		}
 
 		float minOverlap = overlap.x;
-		normal = { 1, 0, 0 };
+		col.normal = { 1, 0, 0 };
 		if (overlap.y < minOverlap)
 		{
 			minOverlap = overlap.y;
-			normal = { 0, 1, 0 };
+			col.normal = { 0, 1, 0 };
 		}
 		if (overlap.z < minOverlap)
 		{
 			minOverlap = overlap.z;
-			normal = { 0, 0, 1 };
+			col.normal = { 0, 0, 1 };
 		}
 
 		Vector3 delta = pos2 - pos1;
-		if (Vector3::dot(delta, normal) < 0)
+		if (Vector3::dot(delta, col.normal) < 0)
 		{
-			normal = -normal; // Make sure normal points from c1 to c2
+			col.normal *= 1; // Make sure normal points from c1 to c2
 		}
-		depth = minOverlap;
+		col.depth = minOverlap;
 		return true;
 	}
 
@@ -112,8 +113,9 @@ namespace epl
 		return true;
 	}
 
-	bool AABBColliderFuncs::isIntersectingAABB(const Ray& ray, const AABBCollider& collider, const Vector3& position, RayHit& hit)
+	bool AABBColliderFuncs::isIntersectingAABB(const Registry& reg, const Ray& ray, const AABBCollider& collider, Entity entity, RayHit& hit)
 	{
-		return isIntersectingBox(ray, position + collider.offset, collider.halfSize, hit);
+		Position pos = reg.getComponent<Position>(entity);
+		return isIntersectingBox(ray, pos.value + collider.offset, collider.halfSize, hit);
 	}
 }

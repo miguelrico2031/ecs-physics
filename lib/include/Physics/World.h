@@ -6,7 +6,8 @@
 #include <Physics/Colliders/ColliderRegistry.h>
 #include <Physics/Colliders/SphereCollider.h>
 #include <Physics/Colliders/AABBCollider.h>
-#include <Physics/Collision/Detection/ICollisionDetectionSystem.h>
+#include <Physics/Colliders/OBBCollider.h>
+#include <Physics/Collision/ICollisionDetectionSystem.h>
 #include <Physics/Collision/Collision.h>
 #include <Physics/Raycast/IRaycastSystem.h>
 #include <memory>

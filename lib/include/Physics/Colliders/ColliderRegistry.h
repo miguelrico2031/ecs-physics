@@ -4,6 +4,7 @@
 #include <Physics/Colliders/BaseCollider.h>
 #include <Physics/Raycast/Ray.h>
 #include <Physics/Raycast/RayHit.h>
+#include <Physics/Collision/Collision.h>
 #include <ECS/Registry.h>
 #include <functional>
 #include <cassert>
@@ -12,10 +13,10 @@
 namespace epl
 {
 
-	using CollisionCheck = std::function<bool(const BaseCollider&, const BaseCollider&, const Vector3&/*col1 pos*/, const Vector3&/*col2 pos*/,
-		Vector3&/*normal (from A -> B*/, float&/*depth*/)>;
+	using CollisionCheck = std::function<bool(const Registry&, const BaseCollider&, const BaseCollider&, 
+		Entity/*col1 entity*/, Entity/*col2 entity*/, Collision&)>;
 
-	using RayIntersectionCheck = std::function<bool(const Ray&, const BaseCollider&, const Vector3&/*position*/, RayHit&)>;
+	using RayIntersectionCheck = std::function<bool(const Registry&, const Ray&, const BaseCollider&, Entity, RayHit&)>;
 
 	using ColliderForEach = std::function<void(Entity, const BaseCollider&)>;
 	using ColliderIteratorFunc = std::function<void(const Registry&, ColliderForEach)>;
@@ -51,28 +52,28 @@ namespace epl
 		}
 
 		template<class Collider_A, class Collider_B>
-		void registerCollisionCheck(std::function<bool(const Collider_A&, const Collider_B&, const Vector3&, const Vector3&, Vector3&, float&)> func)
+		void registerCollisionCheck(std::function<bool(const Registry&, const Collider_A&, const Collider_B&, Entity, Entity, Collision&)> func)
 		{
 			ColliderTypeID aId = ColliderType::getColliderTypeID<Collider_A>();
 			ColliderTypeID bId = ColliderType::getColliderTypeID<Collider_B>();
 
 			//function wrappers to static cast the BaseCollider refs to Collider_A and Colider_B refs
 			//they work in both senses (AB and BA)
-			auto abFunc = [func](const BaseCollider& c1, const BaseCollider& c2, const Vector3& p1, const Vector3& p2, Vector3& normal, float& depth) ->
+			auto abFunc = [func](const Registry& reg, const BaseCollider& c1, const BaseCollider& c2, Entity e1, Entity e2, Collision& col) ->
 				bool
 				{
-					const Collider_A& colA = static_cast<const Collider_A&>(c1);
-					const Collider_B& colB = static_cast<const Collider_B&>(c2);
-					return func(colA, colB, p1, p2, normal, depth);
+					const Collider_A& colA1 = static_cast<const Collider_A&>(c1);
+					const Collider_B& colB2 = static_cast<const Collider_B&>(c2);
+					return func(reg, colA1, colB2, e1, e2, col);
 				};
 
-			auto baFunc = [func](const BaseCollider& c1, const BaseCollider& c2, const Vector3& p1, const Vector3& p2, Vector3& normal, float& depth) ->
+			auto baFunc = [func](const Registry& reg, const BaseCollider& c1, const BaseCollider& c2, Entity e1, Entity e2, Collision& col) ->
 				bool
 				{
-					const Collider_A& colA = static_cast<const Collider_A&>(c2);
-					const Collider_B& colB = static_cast<const Collider_B&>(c1);
-					bool result = func(colA, colB, p2, p1, normal, depth); //invert colliders and positions
-					normal = -normal; //invert normal so it points from A -> B
+					const Collider_A& colA2 = static_cast<const Collider_A&>(c2);
+					const Collider_B& colB1 = static_cast<const Collider_B&>(c1);
+					bool result = func(reg, colA2, colB1, e2, e1, col); //invert colliders and positions
+					col.normal *= -1; //invert normal so it points from A -> B
 					return result;
 				};
 
@@ -81,24 +82,23 @@ namespace epl
 		}
 
 		template<class Collider_T>
-		void registerRayIntersectionCheck(std::function<bool(const Ray&, const Collider_T&, const Vector3&, RayHit&)> func)
+		void registerRayIntersectionCheck(std::function<bool(const Registry&, const Ray&, const Collider_T&, Entity, RayHit&)> func)
 		{
 			ColliderTypeID id = ColliderType::getColliderTypeID<Collider_T>();
 
-
 			//function wrapper to static cast the BaseCollider ref to a Collider_T ref
-			auto tFunc = [func](const Ray& ray, const BaseCollider& col, const Vector3& position, RayHit& hit) ->
+			auto tFunc = [func](const Registry& reg, const Ray& ray, const BaseCollider& col, Entity e, RayHit& hit) ->
 				bool
 				{
 					const Collider_T& colT = static_cast<const Collider_T&>(col);
-					return func(ray, colT, position, hit);
+					return func(reg, ray, colT, e, hit);
 				};
 			m_rayIntersectionCheckFunctions[id] = tFunc;
 		}
 
 
 		template<class Collider_A, class Collider_B>
-		const std::function<bool(const Collider_A&, const Collider_B&, const Vector3&, const Vector3&, Vector3&, float&)>*
+		const std::function<bool(const Registry&, const Collider_A&, const Collider_B&, Entity, Entity, Collision&)>*
 			getCollisionCheck() const 
 		{
 			ColliderTypeID aId = ColliderType::getColliderTypeID<Collider_A>();
@@ -116,7 +116,7 @@ namespace epl
 
 
 		template<class Collider_T>
-		const std::function<bool(const Ray&, const Collider_T&, const Vector3&, RayHit&)>*
+		const std::function<bool(const Registry&, const Ray&, const Collider_T&, Entity, RayHit&)>*
 			getRayIntersectionCheck() const
 		{
 			ColliderTypeID id = ColliderType::getColliderTypeID<Collider_T>();
@@ -133,16 +133,6 @@ namespace epl
 		const std::vector<ColliderTypeInfo>& getAllTypes() const { return m_colliderTypesInfo; }
 
 
-
-	//private:
-	//	template<class Collider_T>
-	//	ColliderTypeID getColliderTypeID()
-	//	{
-	//		static ColliderTypeID id = m_nextID++;
-	//		assert(id < MAX_COLLIDER_TYPES && "Too many collider types used."
-	//			"To be able to use more types, do #define MAX_COLLIDER_TYPES <new number> before any #include of this file.");
-	//			return id;
-	//	}
 	private:
 		std::vector<ColliderTypeInfo> m_colliderTypesInfo;
 		CollisionCheck m_collisionCheckFunctions[MAX_COLLIDER_TYPES][MAX_COLLIDER_TYPES];

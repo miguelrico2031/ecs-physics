@@ -1,8 +1,10 @@
 #pragma once 
 #include <Physics/Colliders/BaseCollider.h>
-#include <Math/Vector3.h>
+
+
 namespace epl
 {
+	class Registry;
 	struct Ray;
 	struct RayHit;
 	struct AABBCollider : public BaseCollider
@@ -16,12 +18,11 @@ namespace epl
 	namespace AABBColliderFuncs
 	{
 
-		bool isCollidingAABBAABB(const AABBCollider& c1, const AABBCollider& c2, const Vector3& p1, const Vector3& p2,
-			Vector3& normal, float& depth);
+		bool isCollidingAABBAABB(const Registry& reg, const AABBCollider& c1, const AABBCollider& c2, Entity e1, Entity e2, Collision& col);
 
 		bool isIntersectingBox(const Ray& ray, const Vector3& position, const Vector3& halfSize, RayHit& hit);
 
-		bool isIntersectingAABB(const Ray& ray, const AABBCollider& collider, const Vector3& position, RayHit& hit);
+		bool isIntersectingAABB(const Registry& reg, const Ray& ray, const AABBCollider& collider, Entity entity, RayHit& hit);
 
 	}
 }

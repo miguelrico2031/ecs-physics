@@ -6,7 +6,7 @@ namespace epl
 	bool IterativeRaycaster::raycast(const Ray& ray, const Registry& reg, const ColliderRegistry& colliderReg, RayHit& hit)
 	{
 		bool intersected = false;
-		hit.distanceFromRayOrigin = Math::Infinity();
+		hit.distanceFromRayOrigin = Math::infinity();
 
 		RayHit newHit;
 
@@ -22,16 +22,16 @@ namespace epl
 
 			colliderType.forEachColliderOfThisType(reg, [&](Entity entity, const BaseCollider& col)
 				{
-					const Position& position = reg.getComponent<Position>(entity);
+					//const Position& position = reg.getComponent<Position>(entity);
 					
-					if (intersectionCheckFunc(ray, col, position.value, newHit))
+					if (intersectionCheckFunc(reg, ray, col, entity, newHit))
 					{
 						intersected = true;
 						if (newHit.distanceFromRayOrigin < hit.distanceFromRayOrigin)
 						{
 							hit = newHit;
 							hit.entity = entity;
-							hit.collider = col;
+							hit.collider = &col;
 						}
 					}
 				});
@@ -63,12 +63,12 @@ namespace epl
 					{
 						return;
 					}
-					const Position& position = reg.getComponent<Position>(entity);
+					//const Position& position = reg.getComponent<Position>(entity);
 					RayHit newHit;
-					if (intersectionCheckFunc(ray, col, position.value, newHit))
+					if (intersectionCheckFunc(reg, ray, col, entity, newHit))
 					{
 						newHit.entity = entity;
-						newHit.collider = col;
+						newHit.collider = &col;
 						hits.push_back(newHit);
 					}
 				});

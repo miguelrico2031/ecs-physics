@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "rlgl.h"
 #include <Physics/World.h>
 #include <random>
 #include <cmath>
@@ -23,6 +24,7 @@ void renderColliders(const epl::Registry& reg);
 void renderCollisionNormals(const epl::World& world);
 void renderRaysAndHits(const epl::Registry& reg);
 epl::Vector3 randomInUnitSphere();
+epl::Vector3 randomEulerAngles();
 void togglePause();
 void toggleGravity(epl::Registry& reg);
 void applyRandomUpForce(epl::Registry& reg);
@@ -50,9 +52,9 @@ int main()
 	camera.fovy = 45.f;
 	camera.projection = CAMERA_PERSPECTIVE;
 
-	constexpr int numBodies = 100;
+	constexpr int numBodies = 20;
 	constexpr epl::Vector3 startPos = { 0.f, 25.f, 0.f };
-	constexpr float spread = 5.f;
+	constexpr float spread = 15.f;
 
 
 	std::shared_ptr<epl::Registry> regPtr = std::make_shared<epl::Registry>(2048);
@@ -73,13 +75,19 @@ int main()
 		epl::Vector3 pos = startPos + randomInUnitSphere() * spread;
 		auto e = world.createDynamicBody(1, pos);
 
-		if (i % 2 == 0)
+		if (i % 3 == 0)
 		{
 			reg.addComponent<epl::AABBCollider>(e, epl::Vector3{ .5f, .5f, .5f });
 		}
-		else
+		else if (i % 3 == 1)
 		{
 			reg.addComponent<epl::SphereCollider>(e, .5f);
+		}
+		else
+		{
+			reg.addComponent<epl::OBBCollider>(e, epl::Vector3{ .75f, .75f, .75f });
+			auto angles = randomEulerAngles();
+			reg.getComponent<epl::Rotation>(e).value = epl::Quaternion::fromEulerAngles(angles);
 		}
 	}
 
@@ -168,6 +176,25 @@ void renderColliders(const epl::Registry& reg)
 		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
 	}
+	for (const auto& [entity, collider] : reg.iterate<epl::OBBCollider>())
+	{
+		Color color = reg.hasComponent<IsColliding>(entity) ? GREEN : RED;
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
+		epl::Quaternion rotation = reg.getComponent<epl::Rotation>(entity).value;
+
+		auto [axis, angleRadians] = epl::Quaternion::toAxisAngle(rotation);
+
+		rlPushMatrix();
+		rlTranslatef(position.x, position.y, position.z);
+		rlRotatef(RAD2DEG * angleRadians, axis.x, axis.y, axis.z);
+		DrawCubeWiresV({0, 0, 0}, toVector3(collider.halfSize * 2.f), color);
+		rlPopMatrix();
+
+		//also draw the box not rotated to debug
+		DrawCubeWires({ position.x, position.y, position.z },
+			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, LIGHTGRAY);
+	}
+
 }
 
 void renderCollisionNormals(const epl::World& world)
@@ -203,6 +230,13 @@ epl::Vector3 randomInUnitSphere()
 		p.z = dist(gen);
 	} while ((p.x * p.x + p.y * p.y + p.z * p.z) >= 1.0f);
 	return p;
+}
+
+epl::Vector3 randomEulerAngles()
+{
+	static thread_local std::mt19937 gen(std::random_device{}());
+	static thread_local std::uniform_real_distribution<float> dist(0.f, 2.f * epl::Math::pi());
+	return { dist(gen), dist(gen), dist(gen) };
 }
 
 void togglePause()

@@ -1,12 +1,11 @@
-#include <Physics/Collision/Detection/DoubleIteration.h>
+#include <Physics/Collision/IterativeCollisionDetection.h>
 #include <ECS/Registry.h>
-//#include <Physics/Collision/CollidersUtil.h>
 #include <Physics/Motion/MotionComponents.h>
 #include <Physics/Colliders/ColliderRegistry.h>
 
 namespace epl
 {
-	void DoubleIteration::detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions)
+	void IterativeCollisionDetection::detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions)
 	{
 		const auto& allColliderTypes = colliderReg.getAllTypes();
 
@@ -29,13 +28,16 @@ namespace epl
 						colliderType2.forEachColliderOfThisType(reg, [&](Entity e2, const BaseCollider& col2)
 							{
 								if (e1 >= e2) return;
-								Vector3 p1 = reg.getComponent<Position>(e1).value;
-								Vector3 p2 = reg.getComponent<Position>(e2).value;
-								Vector3 normal;
-								float depth;
-								if (collisionCheckFunc(col1, col2, p1, p2, normal, depth))
+								//Vector3 p1 = reg.getComponent<Position>(e1).value;
+								//Vector3 p2 = reg.getComponent<Position>(e2).value;
+								//Vector3 normal;
+								//float depth;
+								Collision collision;
+								if (collisionCheckFunc(reg, col1, col2, e1, e2, collision))
 								{
-									collisions.emplace_back(e1, e2, normal, depth);
+									collision.entity1 = e1;
+									collision.entity2 = e2;
+									collisions.push_back(collision);
 								}
 							});
 					});

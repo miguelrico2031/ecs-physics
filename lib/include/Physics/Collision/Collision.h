@@ -10,7 +10,7 @@ namespace epl
 		Entity entity2;
 		Vector3 normal;
 		float depth;
-		Collision(Entity entity1_, Entity entity2_, const Vector3& normal_, float depth_)
-			: entity1(entity1_), entity2(entity2_), normal(normal_), depth(depth_) {}
+		//Collision(Entity entity1_, Entity entity2_, const Vector3& normal_, float depth_)
+		//	: entity1(entity1_), entity2(entity2_), normal(normal_), depth(depth_) {}
 	};
 }

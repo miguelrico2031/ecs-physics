@@ -2,14 +2,19 @@
 #include <Physics/Colliders/AABBCollider.h>
 #include <Physics/Raycast/Ray.h>
 #include <Physics/Raycast/RayHit.h>
+#include <Physics/Motion/MotionComponents.h>
+#include <ECS/Registry.h>
+
 
 namespace epl
 {
-	bool SphereColliderFuncs::isCollidingSphereSphere(const SphereCollider& c1, const SphereCollider& c2, const Vector3& p1, const Vector3& p2,
-		Vector3& normal, float& depth)
+	bool SphereColliderFuncs::isCollidingSphereSphere(const Registry& reg, const SphereCollider& c1, const SphereCollider& c2, 
+		Entity e1, Entity e2, Collision& col)
 	{
-		Vector3 pos1 = p1 + c1.offset;
-		Vector3 pos2 = p2 + c2.offset;
+		Position p1 = reg.getComponent<Position>(e1);
+		Position p2 = reg.getComponent<Position>(e2);
+		Vector3 pos1 = p1.value + c1.offset;
+		Vector3 pos2 = p2.value + c2.offset;
 		Vector3 delta = pos2 - pos1;
 		float distance = Vector3::magnitude(delta);
 		float totalRadius = c1.radius + c2.radius;
@@ -20,29 +25,30 @@ namespace epl
 
 		if (distance > Math::epsilon())
 		{
-			normal = delta / distance;
-			depth = totalRadius - distance;
+			col.normal = delta / distance;
+			col.depth = totalRadius - distance;
 		}
 		else
 		{
-			normal = { 0, 1, 0 };
-			depth = totalRadius;
+			col.normal = { 0, 1, 0 };
+			col.depth = totalRadius;
 		}
 
 		return true;
 	}
 
-	bool SphereColliderFuncs::isCollidingSphereAABB(const SphereCollider& sphere, const AABBCollider& aabb, const Vector3& pSphere, const Vector3& pAabb,
-		Vector3& normal, float& depth)
+	bool SphereColliderFuncs::isCollidingSphereAABB(const Registry& reg, const SphereCollider& c1, const AABBCollider& c2, Entity e1, Entity e2, Collision& col)
 	{
-		Vector3 spherePosition = pSphere + sphere.offset;
-		Vector3 aabbPosition = pAabb + aabb.offset;
-		Vector3 aabbMin = aabbPosition - aabb.halfSize;
-		Vector3 aabbMax = aabbPosition + aabb.halfSize;
+		Position pSphere = reg.getComponent<Position>(e1);
+		Position pAabb = reg.getComponent<Position>(e2);
+		Vector3 spherePosition = pSphere.value + c1.offset;
+		Vector3 aabbPosition = pAabb.value + c2.offset;
+		Vector3 aabbMin = aabbPosition - c2.halfSize;
+		Vector3 aabbMax = aabbPosition + c2.halfSize;
 		Vector3 closestPoint = Vector3::clamp(spherePosition, aabbMin, aabbMax);
 		Vector3 delta = closestPoint - spherePosition;
 		float distSquared = Vector3::squaredMagnitude(delta);
-		if (distSquared > sphere.radius * sphere.radius)
+		if (distSquared > c1.radius * c1.radius)
 		{
 			return false;
 		}
@@ -51,8 +57,8 @@ namespace epl
 
 		if (distance > Math::epsilon())
 		{
-			normal = delta / distance;
-			depth = sphere.radius - distance;
+			col.normal = delta / distance;
+			col.depth = c1.radius - distance;
 		}
 		else //sphere center is inside the AABB
 		{
@@ -61,26 +67,28 @@ namespace epl
 
 			if (absDirectionFromCenter.x > absDirectionFromCenter.y && absDirectionFromCenter.x > absDirectionFromCenter.z)
 			{
-				normal = { directionFromCenter.x > 0.f ? 1.f : -1.f, 0, 0 };
+				col.normal = { directionFromCenter.x > 0.f ? 1.f : -1.f, 0, 0 };
 			}
 			else if (absDirectionFromCenter.y > absDirectionFromCenter.z)
 			{
-				normal = { 0, directionFromCenter.y > 0.f ? 1.f : -1.f, 0 };
+				col.normal = { 0, directionFromCenter.y > 0.f ? 1.f : -1.f, 0 };
 			}
 			else
 			{
-				normal = { 0, 0, directionFromCenter.z > 0.f ? 1.f : -1.f };
+				col.normal = { 0, 0, directionFromCenter.z > 0.f ? 1.f : -1.f };
 			}
 
-			depth = sphere.radius;
+			col.depth = c1.radius;
 		}
 		return true;
 	}
 
 
-	bool SphereColliderFuncs::isIntersectingSphere(const Ray& ray, const SphereCollider& collider, const Vector3& position, RayHit& hit)
+	bool SphereColliderFuncs::isIntersectingSphere(const Registry& reg, const Ray& ray, const SphereCollider& collider, 
+		Entity entity, RayHit& hit)
 	{
-		Vector3 spherePos = position + collider.offset;
+		Position position = reg.getComponent<Position>(entity);
+		Vector3 spherePos = position.value + collider.offset;
 		Vector3 direction = spherePos - ray.origin; //from ray origin to sphere center
 		float projected = Vector3::dot(direction, ray.direction); //direction projected in the ray direction
 

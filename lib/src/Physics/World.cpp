@@ -1,6 +1,6 @@
 #include <Physics/World.h>
 #include <Physics/Motion/Integrators/EulerSemiImplicit.h>
-#include <Physics/Collision/Detection/DoubleIteration.h>
+#include <Physics/Collision/IterativeCollisionDetection.h>
 #include <Physics/Raycast/IterativeRaycaster.h>
 namespace epl
 {
@@ -9,7 +9,7 @@ namespace epl
 		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
-		m_collisionDetectionSystem(std::make_unique<DoubleIteration>()),
+		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -23,7 +23,7 @@ namespace epl
 		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
-		m_collisionDetectionSystem(std::make_unique<DoubleIteration>()),
+		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -98,22 +98,29 @@ namespace epl
 		m_registry->registerComponentType<Torque>();
 		m_registry->registerComponentType<Gravity>();
 		m_registry->registerComponentType<Kinematic>();
-
-
-		m_registry->registerComponentType<SphereCollider>();
-		m_registry->registerComponentType<AABBCollider>();
-		//m_registry->registerComponentType<IsColliding>();
 	}
 
 	void World::registerBuiltInColliders()
 	{
-		m_colliderRegistry->registerColliderType<SphereCollider>();
+		m_registry->registerComponentType<AABBCollider>();
 		m_colliderRegistry->registerColliderType<AABBCollider>();
-
-		m_colliderRegistry->registerCollisionCheck<SphereCollider, SphereCollider>(SphereColliderFuncs::isCollidingSphereSphere);
 		m_colliderRegistry->registerCollisionCheck<AABBCollider, AABBCollider>(AABBColliderFuncs::isCollidingAABBAABB);
+		m_colliderRegistry->registerRayIntersectionCheck<AABBCollider>(AABBColliderFuncs::isIntersectingAABB);
+
+		m_registry->registerComponentType<SphereCollider>();
+		m_colliderRegistry->registerColliderType<SphereCollider>();
+		m_colliderRegistry->registerCollisionCheck<SphereCollider, SphereCollider>(SphereColliderFuncs::isCollidingSphereSphere);
 		m_colliderRegistry->registerCollisionCheck<SphereCollider, AABBCollider>(SphereColliderFuncs::isCollidingSphereAABB);
 		m_colliderRegistry->registerRayIntersectionCheck<SphereCollider>(SphereColliderFuncs::isIntersectingSphere);
-		m_colliderRegistry->registerRayIntersectionCheck<AABBCollider>(AABBColliderFuncs::isIntersectingAABB);
+
+
+		m_registry->registerComponentType<OBBCollider>();
+		m_colliderRegistry->registerColliderType<OBBCollider>();
+		m_colliderRegistry->registerCollisionCheck<OBBCollider, OBBCollider>(OBBColliderFuncs::isCollidingOBBOBB);
+		m_colliderRegistry->registerCollisionCheck<OBBCollider, AABBCollider>(OBBColliderFuncs::isCollidingOBBAABB);
+		m_colliderRegistry->registerCollisionCheck<OBBCollider, SphereCollider>(OBBColliderFuncs::isCollidingOBBSphere);
+		m_colliderRegistry->registerRayIntersectionCheck<OBBCollider>(OBBColliderFuncs::isIntersectingOBB);
+
+
 	}
 }

@@ -7,14 +7,19 @@ namespace epl::Math
 		return 0.0001f;
 	}
 
-	inline constexpr float Infinity() noexcept
+	inline constexpr float infinity() noexcept
 	{
 		return std::numeric_limits<float>::max();
 	}
 
-	inline constexpr float NegativeInfinity() noexcept
+	inline constexpr float negativeInfinity() noexcept
 	{
 		return std::numeric_limits<float>::min();
+	}
+
+	inline constexpr float pi() noexcept
+	{
+		return 3.14159265358f;
 	}
 
 

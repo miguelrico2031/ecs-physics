@@ -7,7 +7,7 @@ namespace epl
 	struct RayHit
 	{
 		Entity entity = NULL_ENTITY;
-		BaseCollider* collider;
+		const BaseCollider* collider;
 		Vector3 point;
 		float distanceFromRayOrigin;
 	};
