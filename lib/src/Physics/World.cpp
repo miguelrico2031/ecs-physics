@@ -35,13 +35,14 @@ namespace epl
 	Entity World::createDynamicBody(float mass, Vector3 position, Quaternion rotation, Vector3 gravity)
 	{
 		Entity e = m_registry->createEntity();
-		m_registry->addComponent<Mass>(e, mass);
 		m_registry->addComponent<Position>(e, position);
 		m_registry->addComponent<LinearVelocity>(e, Vector3::zero());
 		m_registry->addComponent<Force>(e, Vector3::zero());
 		m_registry->addComponent<Rotation>(e, rotation);
 		m_registry->addComponent<AngularVelocity>(e, Vector3::zero());
 		m_registry->addComponent<Torque>(e, Vector3::zero());
+		m_registry->addComponent<Mass>(e, mass);
+		m_registry->addComponent<InverseInertia>(e, Matrix3x3::zero()); //uninitialized
 		if (gravity != Vector3::zero())
 		{
 			m_registry->addComponent<Gravity>(e, gravity);
@@ -54,7 +55,6 @@ namespace epl
 		Entity e = m_registry->createEntity();
 		m_registry->addComponent<Position>(e, position);
 		m_registry->addComponent<Rotation>(e, rotation);
-		m_registry->addComponent<Kinematic>(e);
 		return e;
 	}
 
@@ -64,8 +64,8 @@ namespace epl
 		//inertia calc if dynamic
 		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
 		{
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, (*massOpt).inverseMass);
-			m_registry->addComponent<InverseInertia>(entity, invInertia);
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, massOpt->inverseMass);
+			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 		return col;
 	}
@@ -76,8 +76,8 @@ namespace epl
 		//inertia calc if dynamic
 		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
 		{
-			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(halfSize, (*massOpt).inverseMass);
-			m_registry->addComponent<InverseInertia>(entity, invInertia);
+			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(halfSize, massOpt->inverseMass);
+			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 		return col;
 	}
@@ -181,7 +181,6 @@ namespace epl
 
 	void World::registerPhysicsComponents()
 	{
-		m_registry->registerComponentType<Mass>();
 		m_registry->registerComponentType<Position>();
 		m_registry->registerComponentType<LinearVelocity>();
 		m_registry->registerComponentType<Force>();
@@ -189,7 +188,8 @@ namespace epl
 		m_registry->registerComponentType<AngularVelocity>();
 		m_registry->registerComponentType<Torque>();
 		m_registry->registerComponentType<Gravity>();
-		m_registry->registerComponentType<Kinematic>();
+		m_registry->registerComponentType<Mass>();
+		m_registry->registerComponentType<InverseInertia>();
 	}
 
 	void World::registerBuiltInColliders()

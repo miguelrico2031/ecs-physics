@@ -14,11 +14,11 @@ namespace epl
 		// Constructors
 		Matrix3x3() noexcept = default;
 
-		explicit Matrix3x3(const Vector3& diagonal) noexcept //diagonal vector
+		explicit constexpr Matrix3x3(const Vector3& diagonal) noexcept //diagonal vector
+			: matrix{ diagonal.x, 0.0f, 0.0f,
+					0.0f, diagonal.y, 0.0f,
+					0.0f, 0.0f, diagonal.z }
 		{
-			matrix[0] = diagonal.x; matrix[1] = 0.0f;		matrix[2] = 0.0f;
-			matrix[3] = 0.0f;		matrix[4] = diagonal.y; matrix[5] = 0.0f;
-			matrix[6] = 0.0f;		matrix[7] = 0.0f;		matrix[8] = diagonal.z;
 		}
 
 		explicit Matrix3x3(const Quaternion& q) noexcept
@@ -187,7 +187,19 @@ namespace epl
 			return &matrix[row * 3];
 		}
 
+
 		friend std::ostream& operator<<(std::ostream& out, const Matrix3x3& m);
+
+
+		inline static constexpr Matrix3x3 identity()
+		{
+			return Matrix3x3(Vector3{ 1, 1, 1, });
+		}
+
+		inline static constexpr Matrix3x3 zero()
+		{
+			return Matrix3x3();
+		}
 
 	};
 

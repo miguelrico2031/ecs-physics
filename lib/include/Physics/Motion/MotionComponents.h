@@ -67,5 +67,4 @@ namespace epl
 	};
 
 
-	struct Kinematic {};
 }

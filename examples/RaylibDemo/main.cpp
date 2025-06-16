@@ -25,7 +25,7 @@ struct
 {
 	const int numBodies = 100;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
-	const float spread = 15.f;
+	const float spread = 5.f;
 } SimulationParams;
 
 static bool paused = false;
@@ -121,7 +121,6 @@ void registerCustomComponents(epl::Registry& reg)
 
 void createBodies(epl::World& world)
 {
-	epl::Registry& reg = world.getRegistry();
 	for (size_t i = 0; i < SimulationParams.numBodies; i++)
 	{
 		epl::Vector3 pos = SimulationParams.startPos + randomInUnitSphere() * SimulationParams.spread;
@@ -129,14 +128,15 @@ void createBodies(epl::World& world)
 
 		if (i % 2 == 0)
 		{
-			reg.addComponent<epl::SphereCollider>(e, .5f);
+			world.addSphereColliderToBody(e, .5f);
 		}
 		else
 		{
-			reg.addComponent<epl::BoxCollider>(e, epl::Vector3{ .75f, .75f, .75f });
-			auto angles = randomEulerAngles();
-			reg.getComponent<epl::Rotation>(e).value = epl::Quaternion::fromEulerAngles(angles);
+			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
 		}
+		auto angles = randomEulerAngles();
+		//world.getRegistry().getComponent<epl::Rotation>(e).value = epl::Quaternion::fromEulerAngles(angles);
+		world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
 	}
 }
 
@@ -218,9 +218,9 @@ void renderColliders(const epl::Registry& reg)
 		DrawCubeWiresV({ 0, 0, 0 }, toRaylib(collider.halfSize * 2.f), color);
 		rlPopMatrix();
 
-		//also draw the box not rotated to debug
-		DrawCubeWires({ position.x, position.y, position.z },
-			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, LIGHTGRAY);
+		////also draw the box not rotated to debug
+		//DrawCubeWires({ position.x, position.y, position.z },
+		//	collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, LIGHTGRAY);
 	}
 
 }
