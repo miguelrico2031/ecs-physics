@@ -26,14 +26,17 @@ namespace epl
 		if (distance > Math::epsilon())
 		{
 			col.normal = delta / distance;
+			col.contactPoint1 = pos1 + col.normal * c1.radius;
+			col.contactPoint2 = pos2 - col.normal * c2.radius;
 			col.depth = totalRadius - distance;
 		}
-		else
+		else //the spheres at almost entirely overlapped
 		{
-			col.normal = { 0, 1, 0 };
+			col.normal = { 0, 1, 0 }; //arbitrary normal
+			col.contactPoint1 = pos1;
+			col.contactPoint2 = pos2;
 			col.depth = totalRadius;
 		}
-
 		return true;
 	}
 
@@ -80,6 +83,9 @@ namespace epl
 
 			col.depth = c1.radius;
 		}
+		//TODO: check if these contact points work well in collision resolution
+		col.contactPoint1 = spherePosition + col.normal * c1.radius;
+		col.contactPoint2 = closestPoint; 
 		return true;
 	}
 

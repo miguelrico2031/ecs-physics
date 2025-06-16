@@ -44,6 +44,9 @@ namespace epl
 		{
 			col.normal *= 1; // Make sure normal points from c1 to c2
 		}
+		//setting the contact points to their origins avoids adding torque at collision resolution
+		col.contactPoint1 = pos1;
+		col.contactPoint1 = pos2;
 		col.depth = minOverlap;
 		return true;
 	}

@@ -9,8 +9,8 @@ namespace epl
 		Entity entity1;
 		Entity entity2;
 		Vector3 normal;
+		Vector3 contactPoint1;
+		Vector3 contactPoint2;
 		float depth;
-		//Collision(Entity entity1_, Entity entity2_, const Vector3& normal_, float depth_)
-		//	: entity1(entity1_), entity2(entity2_), normal(normal_), depth(depth_) {}
 	};
 }

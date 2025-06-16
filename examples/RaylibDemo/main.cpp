@@ -33,6 +33,7 @@ static bool paused = false;
 void initWindowAndCamera(Camera& camera);
 void registerCustomComponents(epl::Registry& reg);
 void createBodies(epl::World& world);
+void createBigCuboid(epl::World& world);
 
 void update(epl::World& world, Camera& camera, float dt);
 void render(epl::World& world, Camera& camera);
@@ -46,6 +47,7 @@ void togglePause();
 void toggleGravity(epl::Registry& reg);
 void applyRandomUpForce(epl::Registry& reg);
 void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple);
+void shootBody(epl::World& world, Camera& camera);
 void addIsColliding(epl::World& world);
 
 inline static Vector3 toRaylib(const epl::Vector3& v) { return Vector3{ v.x, v.y, v.z }; }
@@ -60,10 +62,11 @@ int main()
 	initWindowAndCamera(camera);
 
 	std::shared_ptr<epl::Registry> regPtr = std::make_shared<epl::Registry>(2048);
-	epl::World world(regPtr);
+	epl::World world(regPtr, .05f);
 
 	registerCustomComponents(*regPtr);
 	createBodies(world);
+	//createBigCuboid(world);
 
 	const float fixedDelta = 1.f / 60.f;
 	float accumulator = 0.f;
@@ -135,9 +138,15 @@ void createBodies(epl::World& world)
 			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
 		}
 		auto angles = randomEulerAngles();
-		//world.getRegistry().getComponent<epl::Rotation>(e).value = epl::Quaternion::fromEulerAngles(angles);
 		world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
 	}
+}
+
+void createBigCuboid(epl::World& world)
+{
+	auto e = world.createDynamicBody(5.f);
+	world.getRegistry().removeComponent<epl::Gravity>(e);
+	world.addBoxColliderToBody(e, epl::Vector3{ 5, 1, 1 });
 }
 
 void update(epl::World& world, Camera& camera, float dt)
@@ -163,6 +172,10 @@ void update(epl::World& world, Camera& camera, float dt)
 		else if (IsMouseButtonPressed(1))
 		{
 			raycastAtMousePos(world, camera, true);
+		}
+		else if (IsMouseButtonPressed(2))
+		{
+			shootBody(world, camera);
 		}
 	}
 
@@ -191,12 +204,6 @@ void render(epl::World& world, Camera& camera)
 
 void renderColliders(const epl::Registry& reg)
 {
-	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
-	{
-		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
-		DrawSphereWires({ position.x, position.y, position.z }, collider.radius, 8, 10, color);
-	}
 	/*for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
@@ -204,6 +211,21 @@ void renderColliders(const epl::Registry& reg)
 		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
 	}*/
+	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
+	{
+		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
+		epl::Quaternion rotation = reg.getComponent<epl::Rotation>(entity).value;
+		
+		auto [axis, angleRadians] = epl::Quaternion::toAxisAngle(rotation);
+
+		rlPushMatrix();
+		rlTranslatef(position.x, position.y, position.z);
+		rlRotatef(RAD2DEG * angleRadians, axis.x, axis.y, axis.z);
+		DrawSphereWires({0, 0, 0}, collider.radius, 8, 10, color);
+		rlPopMatrix();
+	}
+	
 	for (const auto& [entity, collider] : reg.iterate<epl::BoxCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
@@ -364,6 +386,21 @@ void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple)
 		{
 			reg.removeComponent<custom::RayHitPoint>(rayHitPointEntity);
 		}
+	}
+}
+
+void shootBody(epl::World& world, Camera& camera)
+{
+	constexpr float forceMagnitude = 200.f;
+	epl::Registry& reg = world.getRegistry();
+	Vector2 mousePos = { GetScreenWidth() / 2.f,  GetScreenHeight() / 2.f };
+	Ray raylibRay = GetScreenToWorldRay(mousePos, camera);
+	epl::Ray ray = toEpl(raylibRay);
+	epl::RayHit rayHit;
+	if (world.raycast(ray, rayHit) && reg.hasComponent<epl::Force>(rayHit.entity) && reg.hasComponent<epl::Torque>(rayHit.entity))
+	{
+		//epl::Vector3 direction = epl::Vector3::normalize({ ray.direction.x, 0.f, ray.direction.z });
+		world.addForceAtPoint(rayHit.entity, ray.direction * forceMagnitude, rayHit.point);
 	}
 }
 
