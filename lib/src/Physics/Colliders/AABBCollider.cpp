@@ -9,10 +9,9 @@ namespace epl
 	bool AABBColliderFuncs::isCollidingAABBAABB(const Registry& reg, const AABBCollider& c1, const AABBCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		Position p1 = reg.getComponent<Position>(e1);
-		Position p2 = reg.getComponent<Position>(e2);
-		Vector3 pos1 = p1.value + c1.offset;
-		Vector3 pos2 = p2.value + c2.offset;
+
+		Vector3 pos1 = reg.getComponent<Position>(e1).value;
+		Vector3 pos2 = reg.getComponent<Position>(e2).value;
 		Vector3 min1 = pos1 - c1.halfSize;
 		Vector3 max1 = pos1 + c1.halfSize;
 		Vector3 min2 = pos2 - c2.halfSize;
@@ -121,7 +120,7 @@ namespace epl
 	bool AABBColliderFuncs::isIntersectingAABB(const Registry& reg, const Ray& ray, const AABBCollider& collider, Entity entity, RayHit& hit)
 	{
 		Position pos = reg.getComponent<Position>(entity);
-		return isIntersectingBox(ray, pos.value + collider.offset, collider.halfSize, hit);
+		return isIntersectingBox(ray, pos.value, collider.halfSize, hit);
 	}
 
 	Matrix3x3 AABBColliderFuncs::calculateInverseInertiaTensor(const Vector3& halfSize, float inverseMass)

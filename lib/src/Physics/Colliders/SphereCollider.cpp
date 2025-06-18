@@ -11,10 +11,8 @@ namespace epl
 	bool SphereColliderFuncs::isCollidingSphereSphere(const Registry& reg, const SphereCollider& c1, const SphereCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		Position p1 = reg.getComponent<Position>(e1);
-		Position p2 = reg.getComponent<Position>(e2);
-		Vector3 pos1 = p1.value + c1.offset;
-		Vector3 pos2 = p2.value + c2.offset;
+		Vector3 pos1 = reg.getComponent<Position>(e1).value;
+		Vector3 pos2 = reg.getComponent<Position>(e2).value;
 		Vector3 delta = pos2 - pos1;
 		float distance = Vector3::magnitude(delta);
 		float totalRadius = c1.radius + c2.radius;
@@ -43,18 +41,31 @@ namespace epl
 		return true;
 	}
 
-	bool SphereColliderFuncs::isCollidingSphereAABB(const Registry& reg, const SphereCollider& c1, const AABBCollider& c2, Entity e1, Entity e2, Collision& col)
+	bool SphereColliderFuncs::isCollidingSphereAABB(const Registry& reg, const SphereCollider& c1, const AABBCollider& c2, 
+		Entity e1, Entity e2, Collision& col)
 	{
-		Position pSphere = reg.getComponent<Position>(e1);
-		Position pAabb = reg.getComponent<Position>(e2);
-		Vector3 spherePosition = pSphere.value + c1.offset;
-		Vector3 aabbPosition = pAabb.value + c2.offset;
-		Vector3 aabbMin = aabbPosition - c2.halfSize;
-		Vector3 aabbMax = aabbPosition + c2.halfSize;
+		Vector3 spherePosition = reg.getComponent<Position>(e1).value;
+		Vector3 aabbPosition = reg.getComponent<Position>(e2).value;
+		
+		if (!isCollidingSphereBox(spherePosition, c1.radius, aabbPosition, c2.halfSize, col))
+		{
+			return false;
+		}
+		col.entity1 = e1;
+		col.entity2 = e2;
+		return true;
+	}
+
+
+	bool SphereColliderFuncs::isCollidingSphereBox(const Vector3& spherePosition, float sphereRadius, const Vector3& boxPosition,
+		const Vector3& boxHalfSize, Collision& col)
+	{
+		Vector3 aabbMin = boxPosition - boxHalfSize;
+		Vector3 aabbMax = boxPosition + boxHalfSize;
 		Vector3 closestPoint = Vector3::clamp(spherePosition, aabbMin, aabbMax);
 		Vector3 delta = closestPoint - spherePosition;
 		float distSquared = Vector3::squaredMagnitude(delta);
-		if (distSquared > c1.radius * c1.radius)
+		if (distSquared > sphereRadius * sphereRadius)
 		{
 			return false;
 		}
@@ -64,11 +75,11 @@ namespace epl
 		if (distance > Math::epsilon())
 		{
 			col.normal = delta / distance;
-			col.depth = c1.radius - distance;
+			col.depth = sphereRadius - distance;
 		}
 		else //sphere center is inside the AABB
 		{
-			Vector3 directionFromCenter = spherePosition - aabbPosition;
+			Vector3 directionFromCenter = spherePosition - boxPosition;
 			Vector3 absDirectionFromCenter = Vector3::abs(directionFromCenter);
 
 			if (absDirectionFromCenter.x > absDirectionFromCenter.y && absDirectionFromCenter.x > absDirectionFromCenter.z)
@@ -84,13 +95,11 @@ namespace epl
 				col.normal = { 0, 0, directionFromCenter.z > 0.f ? 1.f : -1.f };
 			}
 
-			col.depth = c1.radius;
+			col.depth = sphereRadius;
 		}
 		//TODO: check if these contact points work well in collision resolution
-		col.contactPoint1 = spherePosition + col.normal * c1.radius;
-		col.contactPoint2 = closestPoint; 
-		col.entity1 = e1;
-		col.entity2 = e2;
+		col.contactPoint1 = spherePosition + col.normal * sphereRadius;
+		col.contactPoint2 = closestPoint;
 		return true;
 	}
 
@@ -98,8 +107,7 @@ namespace epl
 	bool SphereColliderFuncs::isIntersectingSphere(const Registry& reg, const Ray& ray, const SphereCollider& collider, 
 		Entity entity, RayHit& hit)
 	{
-		Position position = reg.getComponent<Position>(entity);
-		Vector3 spherePos = position.value + collider.offset;
+		Vector3 spherePos = reg.getComponent<Position>(entity).value;
 		Vector3 direction = spherePos - ray.origin; //from ray origin to sphere center
 		float projected = Vector3::dot(direction, ray.direction); //direction projected in the ray direction
 

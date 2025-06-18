@@ -23,7 +23,7 @@ namespace custom
 
 struct
 {
-	const int numBodies = 100;
+	const int numBodies = 20;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	const float spread = 5.f;
 } SimulationParams;
@@ -32,6 +32,7 @@ static bool paused = false;
 
 void initWindowAndCamera(Camera& camera);
 void registerCustomComponents(epl::Registry& reg);
+void createFloor(epl::World& world);
 void createBodies(epl::World& world);
 void createBigCuboid(epl::World& world);
 
@@ -65,6 +66,7 @@ int main()
 	epl::World world(regPtr, .05f);
 
 	registerCustomComponents(*regPtr);
+	createFloor(world);
 	createBodies(world);
 	//createBigCuboid(world);
 
@@ -122,6 +124,12 @@ void registerCustomComponents(epl::Registry& reg)
 	reg.registerComponentType<custom::RayHitPoint>();
 }
 
+void createFloor(epl::World& world)
+{
+	auto e = world.createKinematicBody(epl::Vector3{ 0.f, -.25f, 0.f });
+	world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ 30.f, .25f, 30.f });
+}
+
 void createBodies(epl::World& world)
 {
 	for (size_t i = 0; i < SimulationParams.numBodies; i++)
@@ -129,11 +137,11 @@ void createBodies(epl::World& world)
 		epl::Vector3 pos = SimulationParams.startPos + randomInUnitSphere() * SimulationParams.spread;
 		auto e = world.createDynamicBody(1, pos);
 
-		if (i % 2 == 0)
-		{
-			world.addSphereColliderToBody(e, .5f);
-		}
-		else
+		//if (i % 2 == 0)
+		//{
+		//	world.addSphereColliderToBody(e, .5f);
+		//}
+		//else
 		{
 			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
 		}
@@ -193,7 +201,7 @@ void render(epl::World& world, Camera& camera)
 	renderCollisionNormals(world);
 	renderColliders(world.getRegistry());
 	renderRaysAndHits(world.getRegistry());
-	DrawGrid(50, 1.0f);
+	DrawGrid(60, 1.0f);
 	EndMode3D();
 	DrawText("+", GetScreenWidth() / 2, GetScreenHeight() / 2, 20, WHITE);
 	DrawFPS(10, 20);
@@ -204,17 +212,17 @@ void render(epl::World& world, Camera& camera)
 
 void renderColliders(const epl::Registry& reg)
 {
-	/*for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
+	for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
-		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
+		Color color = reg.hasComponent<custom::IsColliding>(entity) ? LIME : ORANGE;
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
 		DrawCubeWires({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
-	}*/
+	}
 	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
 		epl::Quaternion rotation = reg.getComponent<epl::Rotation>(entity).value;
 		
 		auto [axis, angleRadians] = epl::Quaternion::toAxisAngle(rotation);
@@ -229,7 +237,7 @@ void renderColliders(const epl::Registry& reg)
 	for (const auto& [entity, collider] : reg.iterate<epl::BoxCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? GREEN : RED;
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value + collider.offset;
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
 		epl::Quaternion rotation = reg.getComponent<epl::Rotation>(entity).value;
 
 		auto [axis, angleRadians] = epl::Quaternion::toAxisAngle(rotation);

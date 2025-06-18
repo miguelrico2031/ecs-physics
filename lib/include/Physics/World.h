@@ -45,9 +45,9 @@ namespace epl
 		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
 
 		//adds a sphere collider to a body and if it is dynamic, calculates it's inertia tensor
-		SphereCollider& addSphereColliderToBody(Entity entity, float radius, Vector3 offset = Vector3::zero());
+		SphereCollider& addSphereColliderToBody(Entity entity, float radius);
 		//adds a box collider to a body and if it is dynamic, calculates it's inertia tensor
-		BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize, Vector3 offset = Vector3::zero());
+		BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize);
 #pragma endregion
 
 #pragma region RAYCAST_HELPERS

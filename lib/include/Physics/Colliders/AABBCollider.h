@@ -10,9 +10,10 @@ namespace epl
 	struct AABBCollider : public BaseCollider
 	{
 		Vector3 halfSize;
-		Vector3 offset;
-		AABBCollider(const Vector3& halfSize_, const Vector3& offset_ = Vector3::zero())
-			: BaseCollider(ColliderType::getColliderTypeID<AABBCollider>()), halfSize(halfSize_), offset(offset_) {}
+		AABBCollider(const Vector3& halfSize_)
+			: BaseCollider(ColliderType::getColliderTypeID<AABBCollider>()), halfSize(halfSize_)
+		{
+		}
 	};
 
 	namespace AABBColliderFuncs

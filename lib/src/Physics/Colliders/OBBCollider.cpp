@@ -13,30 +13,28 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBOBB(const Registry& reg, const OBBCollider& c1, const OBBCollider& c2,
 		Entity e1, Entity e2, Collision& col)
 	{
-		const auto& pos1 = reg.getComponent<Position>(e1);
-		const auto& pos2 = reg.getComponent<Position>(e2);
-		const auto& rot1 = reg.getComponent<Rotation>(e1);
-		const auto& rot2 = reg.getComponent<Rotation>(e2);
-
-		Vector3 position1 = pos1.value + Quaternion::rotate(rot1.value, c1.offset);
-		Vector3 position2 = pos2.value + Quaternion::rotate(rot2.value, c2.offset);
+		Vector3 position1 = reg.getComponent<Position>(e1).value;
+		Vector3 position2 = reg.getComponent<Position>(e2).value;
+		Quaternion rotation1 = reg.getComponent<Rotation>(e1).value;
+		Quaternion rotation2 = reg.getComponent<Rotation>(e2).value;
 
 		Vector3 axes1[3]
 		{
-			Quaternion::rotate(rot1.value, {1, 0, 0}),
-			Quaternion::rotate(rot1.value, {0, 1, 0}),
-			Quaternion::rotate(rot1.value, {0, 0, 1})
+			Quaternion::rotate(rotation1, {1, 0, 0}),
+			Quaternion::rotate(rotation1, {0, 1, 0}),
+			Quaternion::rotate(rotation1, {0, 0, 1})
 		};
 		Vector3 axes2[3]
 		{
-			Quaternion::rotate(rot2.value, {1, 0, 0}),
-			Quaternion::rotate(rot2.value, {0, 1, 0}),
-			Quaternion::rotate(rot2.value, {0, 0, 1})
+			Quaternion::rotate(rotation2, {1, 0, 0}),
+			Quaternion::rotate(rotation2, {0, 1, 0}),
+			Quaternion::rotate(rotation2, {0, 0, 1})
 		};
 
 
 		Vector3 direction = position2 - position1;
 
+		
 		if (testAllSeparatingAxes(axes1, axes2, c1.halfSize, c2.halfSize, direction, col))
 		{
 			return false;
@@ -63,21 +61,19 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBAABB(const Registry& reg, const OBBCollider& c1, const AABBCollider& c2,
 		Entity e1, Entity e2, Collision& col)
 	{
-		const auto& pos1 = reg.getComponent<Position>(e1);
-		const auto& pos2 = reg.getComponent<Position>(e2);
-		const auto& rot1 = reg.getComponent<Rotation>(e1);
+		Vector3 position1 = reg.getComponent<Position>(e1).value;
+		Vector3 position2 = reg.getComponent<Position>(e2).value;
+		Quaternion rotation1 = reg.getComponent<Rotation>(e1).value;
 
-		Vector3 position1 = pos1.value + Quaternion::rotate(rot1.value, c1.offset);
-		Vector3 position2 = pos2.value + c2.offset;
 
 		Vector3 axes1[3]
 		{
-			Quaternion::rotate(rot1.value, {1, 0, 0}),
-			Quaternion::rotate(rot1.value, {0, 1, 0}),
-			Quaternion::rotate(rot1.value, {0, 0, 1})
+			Quaternion::rotate(rotation1, {1, 0, 0}),
+			Quaternion::rotate(rotation1, {0, 1, 0}),
+			Quaternion::rotate(rotation1, {0, 0, 1})
 		};
 
-		static constexpr Vector3 axes2[3] //AABB's axes are aligned with the world space axis of course
+		static constexpr Vector3 axes2[3] //AABB's axes are aligned with the world space axes
 		{
 			{1, 0, 0},
 			{0, 1, 0},
@@ -109,12 +105,31 @@ namespace epl
 		return true;
 	}
 
-
-	bool OBBColliderFuncs::isCollidingOBBSphere(const Registry& reg, const OBBCollider& c1, const SphereCollider& c2,
+	bool OBBColliderFuncs::isCollidingSphereOBB(const Registry& reg, const SphereCollider& c1, const OBBCollider& c2, 
 		Entity e1, Entity e2, Collision& col)
 	{
-		//std::cerr << "error: collision not implemented: isCollidingOBBSphere.\n";
-		return false;
+		Vector3 spherePosition = reg.getComponent<Position>(e1).value;
+		Vector3 obbPosition = reg.getComponent<Position>(e2).value;
+		Quaternion obbRotation = reg.getComponent<Rotation>(e2).value;
+
+		Matrix3x3 obbLocalToWorldSpaceTransform = Matrix3x3(obbRotation);
+		Matrix3x3 worldToObbLocalSpaceTransform = Matrix3x3(Quaternion::conjugate(obbRotation));
+
+		//sphere position in obb's local space
+		Vector3 localSpherePos = worldToObbLocalSpaceTransform * (spherePosition - obbPosition);
+		
+		if (!SphereColliderFuncs::isCollidingSphereBox(localSpherePos, c1.radius, Vector3::zero(), c2.halfSize, col))
+		{
+			return false;
+		}
+
+		//transform results back to world space
+		col.contactPoint1 = (obbLocalToWorldSpaceTransform * col.contactPoint1) + obbPosition;
+		col.contactPoint2 = (obbLocalToWorldSpaceTransform * col.contactPoint2) + obbPosition;
+		col.normal = Vector3::normalize(obbLocalToWorldSpaceTransform * col.normal);
+		col.entity1 = e1;
+		col.entity2 = e2;
+		return true;
 	}
 
 
@@ -127,7 +142,7 @@ namespace epl
 		//we translate the ray origin by subtracting the box origin, and then adding it again to the hit point
 		//scale is not supported (yet) so this way we do the same as 4x4 transform matrices with 3x3s and a vector 
 
-		Vector3 position = reg.getComponent<Position>(entity).value + collider.offset;
+		Vector3 position = reg.getComponent<Position>(entity).value;
 		Quaternion rotation = reg.getComponent<Rotation>(entity).value;
 		Matrix3x3 localToWorldSpaceTransform = Matrix3x3(rotation);
 		Matrix3x3 worldToLocalSpaceTransform = Matrix3x3(Quaternion::conjugate(rotation));
@@ -148,6 +163,9 @@ namespace epl
 	bool OBBColliderFuncs::testAllSeparatingAxes(const Vector3 box1Axes[3], const Vector3 box2Axes[3], const Vector3& box1HalfSize,
 		const Vector3& box2HalfSize, const Vector3& direction, Collision& col)
 	{
+		col.normal = Vector3::zero();
+		col.depth = Math::infinity();
+
 		//Box 1 axes
 		if (testSeparatingAxis(box1Axes[0], box1Axes, box1HalfSize, box2Axes, box2HalfSize, direction, col))
 		{
@@ -214,7 +232,7 @@ namespace epl
 		float centerDistance = Vector3::dot(axis, direction);
 
 		// total extent on the axis
-		float totalProjection = projection1 + projection1;
+		float totalProjection = projection1 + projection2;
 
 		// If the distance is greater than the combined half-extents, there is a separating axis
 		if (Math::abs(centerDistance) > totalProjection)

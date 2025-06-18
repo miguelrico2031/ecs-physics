@@ -58,9 +58,9 @@ namespace epl
 		return e;
 	}
 
-	SphereCollider& World::addSphereColliderToBody(Entity entity, float radius, Vector3 offset)
+	SphereCollider& World::addSphereColliderToBody(Entity entity, float radius)
 	{
-		auto& col = m_registry->addComponent<SphereCollider>(entity, radius, offset);
+		auto& col = m_registry->addComponent<SphereCollider>(entity, radius);
 		//inertia calc if dynamic
 		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
 		{
@@ -70,9 +70,9 @@ namespace epl
 		return col;
 	}
 
-	BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize, Vector3 offset)
+	BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize)
 	{
-		auto& col = m_registry->addComponent<BoxCollider>(entity, halfSize, offset);
+		auto& col = m_registry->addComponent<BoxCollider>(entity, halfSize);
 		//inertia calc if dynamic
 		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
 		{
@@ -210,7 +210,7 @@ namespace epl
 		m_colliderRegistry->registerColliderType<OBBCollider>();
 		m_colliderRegistry->registerCollisionCheck<OBBCollider, OBBCollider>(OBBColliderFuncs::isCollidingOBBOBB);
 		m_colliderRegistry->registerCollisionCheck<OBBCollider, AABBCollider>(OBBColliderFuncs::isCollidingOBBAABB);
-		m_colliderRegistry->registerCollisionCheck<OBBCollider, SphereCollider>(OBBColliderFuncs::isCollidingOBBSphere);
+		m_colliderRegistry->registerCollisionCheck<SphereCollider, OBBCollider>(OBBColliderFuncs::isCollidingSphereOBB);
 		m_colliderRegistry->registerRayIntersectionCheck<OBBCollider>(OBBColliderFuncs::isIntersectingOBB);
 	}
 }
