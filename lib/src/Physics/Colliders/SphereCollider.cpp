@@ -36,7 +36,10 @@ namespace epl
 			col.contactPoint1 = pos1;
 			col.contactPoint2 = pos2;
 			col.depth = totalRadius;
+
 		}
+		col.entity1 = e1;
+		col.entity2 = e2;
 		return true;
 	}
 
@@ -86,6 +89,8 @@ namespace epl
 		//TODO: check if these contact points work well in collision resolution
 		col.contactPoint1 = spherePosition + col.normal * c1.radius;
 		col.contactPoint2 = closestPoint; 
+		col.entity1 = e1;
+		col.entity2 = e2;
 		return true;
 	}
 

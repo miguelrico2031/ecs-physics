@@ -185,6 +185,13 @@ namespace epl
 			return Vector3(roll, pitch, yaw);
 		}
 
+		static inline Vector3 rotate(const Quaternion& q, const Vector3& v)
+		{
+			Vector3 qvec(q.x, q.y, q.z);
+			Vector3 t = Vector3::cross(qvec, v) * 2.0f;
+			return v + q.w * t + Vector3::cross(qvec, t);
+		}
+
 		friend std::ostream& operator<<(std::ostream& out, const Quaternion& q);
 	};
 

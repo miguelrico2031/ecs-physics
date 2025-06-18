@@ -74,6 +74,8 @@ namespace epl
 					const Collider_B& colB1 = static_cast<const Collider_B&>(c1);
 					bool result = func(reg, colA2, colB1, e2, e1, col); //invert colliders and positions
 					col.normal *= -1; //invert normal so it points from A -> B
+					std::swap(col.entity1, col.entity2); //swap entities so they are in the correct order
+					std::swap(col.contactPoint1, col.contactPoint2);
 					return result;
 				};
 

@@ -46,8 +46,10 @@ namespace epl
 		}
 		//setting the contact points to their origins avoids adding torque at collision resolution
 		col.contactPoint1 = pos1;
-		col.contactPoint1 = pos2;
+		col.contactPoint2 = pos2;
 		col.depth = minOverlap;
+		col.entity1 = e1;
+		col.entity2 = e2;
 		return true;
 	}
 

@@ -28,15 +28,9 @@ namespace epl
 						colliderType2.forEachColliderOfThisType(reg, [&](Entity e2, const BaseCollider& col2)
 							{
 								if (e1 >= e2) return;
-								//Vector3 p1 = reg.getComponent<Position>(e1).value;
-								//Vector3 p2 = reg.getComponent<Position>(e2).value;
-								//Vector3 normal;
-								//float depth;
 								Collision collision;
 								if (collisionCheckFunc(reg, col1, col2, e1, e2, collision))
 								{
-									collision.entity1 = e1;
-									collision.entity2 = e2;
 									collisions.push_back(collision);
 								}
 							});

@@ -28,6 +28,18 @@ namespace epl
 		bool isCollidingOBBSphere(const Registry& reg, const OBBCollider& c1, const SphereCollider& c2, Entity e1, Entity e2, Collision& col);
 
 		bool isIntersectingOBB(const Registry& reg, const Ray& ray, const OBBCollider& collider, Entity entity, RayHit& hit);
+	
+
+		bool testSeparatingAxis(Vector3 axis, const Vector3 box1Axes[3],
+			const Vector3& box1HalfSize, const Vector3 box2Axes[3],
+			const Vector3& box2HalfSize, const Vector3& direction, Collision& col);
+		
+		bool testAllSeparatingAxes(const Vector3 box1Axes[3], const Vector3 box2Axes[3], const Vector3& box1HalfSize,
+			const Vector3& box2HalfSize, const Vector3& direction, Collision& col);
+
+		float projectBox(const Vector3& axisToProject, const Vector3 boxAxes[3], const Vector3& boxHalfSize);
+
+
 	}
 
 	using BoxCollider = OBBCollider; //default box collider to use in gameplay (AABB is used for broadphase and other internal calculations)
