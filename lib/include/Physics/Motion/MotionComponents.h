@@ -66,5 +66,12 @@ namespace epl
 		InverseInertia(const Matrix3x3& tensor_) : tensor(tensor_) {}
 	};
 
+	struct LocalInverseInertia
+	{
+		Matrix3x3 tensor;
+		LocalInverseInertia(const Matrix3x3& tensor_) : tensor(tensor_) {}
+	};
+
+	struct DynamicBody {};
 
 }

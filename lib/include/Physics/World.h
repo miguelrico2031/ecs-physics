@@ -12,6 +12,7 @@
 #include <Physics/Raycast/IRaycastSystem.h>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 namespace epl
 {
 	class World
@@ -45,9 +46,9 @@ namespace epl
 		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
 
 		//adds a sphere collider to a body and if it is dynamic, calculates it's inertia tensor
-		SphereCollider& addSphereColliderToBody(Entity entity, float radius);
+		const SphereCollider& addSphereColliderToBody(Entity entity, float radius);
 		//adds a box collider to a body and if it is dynamic, calculates it's inertia tensor
-		BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize);
+		const BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize);
 #pragma endregion
 
 #pragma region RAYCAST_HELPERS
@@ -73,6 +74,13 @@ namespace epl
 		void changeBoxColliderHalfSize(Entity entity, Vector3 newHalfSize);
 #pragma endregion
 
+#pragma region BODY_HELPERS
+		void changeDynamicBodyMass(Entity entity, float newMass);
+		//this only works properly if the entity started its lifetime as a dynamic body (createDynamicBody())
+		//and it needs to alternate between being on and off the physics simulation.
+		//a createKinematicBody() entity will cause undefined behaviour in this method.
+		void setDynamic(Entity entity, bool setToDynamic);
+
 	private:
 		void registerPhysicsComponents();
 		void registerBuiltInColliders();
@@ -85,6 +93,8 @@ namespace epl
 		std::unique_ptr<IRaycastSystem> m_raycastSystem;
 		std::vector<Collision> m_collisions;
 		float m_damping;
+
+		std::unordered_map<Entity, float> m_dynamicBodiesMasses;
 	};
 
 }

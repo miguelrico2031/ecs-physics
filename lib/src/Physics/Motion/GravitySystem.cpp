@@ -1,5 +1,6 @@
 #include <Physics/Motion/GravitySystem.h>
-
+#include <ECS/Registry.h>
+#include <Physics/Motion/MotionComponents.h>
 namespace epl
 {
 	void GravitySystem::applyGravity(Registry& registry)

@@ -201,6 +201,21 @@ namespace epl
 			return Matrix3x3();
 		}
 
+		inline static constexpr Matrix3x3 transpose(const Matrix3x3& m) noexcept
+		{
+			Matrix3x3 result{};
+			result.matrix[0] = m.matrix[0];
+			result.matrix[1] = m.matrix[3];
+			result.matrix[2] = m.matrix[6];
+			result.matrix[3] = m.matrix[1];
+			result.matrix[4] = m.matrix[4];
+			result.matrix[5] = m.matrix[7];
+			result.matrix[6] = m.matrix[2];
+			result.matrix[7] = m.matrix[5];
+			result.matrix[8] = m.matrix[8];
+			return result;
+		}
+
 	};
 
 	inline std::ostream& operator<<(std::ostream& out, const Matrix3x3& m)

@@ -16,8 +16,9 @@ namespace epl
 
 	void EulerSemiImplicit::integrateLinearAcceleration(Registry& registry, float dt)
 	{
-		for (auto [entity, velocity] : registry.iterate<LinearVelocity>())
+		for (auto [entity, d] : registry.iterate<DynamicBody>())
 		{
+			LinearVelocity& velocity = registry.getComponent<LinearVelocity>(entity);
 			Force& force = registry.getComponent<Force>(entity);
 			const Mass& mass = registry.getComponent<Mass>(entity);
 			velocity.value += force.value * (mass.inverseMass * dt);
@@ -26,8 +27,9 @@ namespace epl
 	}
 	void EulerSemiImplicit::integrateLinearVelocity(Registry& registry, float dt, float damping)
 	{
-		for (auto [entity, velocity] : registry.iterate<LinearVelocity>())
+		for (auto [entity, d] : registry.iterate<DynamicBody>())
 		{
+			LinearVelocity& velocity = registry.getComponent<LinearVelocity>(entity);
 			Position& position = registry.getComponent<Position>(entity);
 			position.value += velocity.value * dt;
 			velocity.value *= damping; // apply damping in the same iteration
@@ -36,8 +38,9 @@ namespace epl
 	void EulerSemiImplicit::integrateAngularAcceleration(Registry& registry, float dt)
 	{
 		//TODO: inertia
-		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
+		for (auto [entity, d] : registry.iterate<DynamicBody>())
 		{
+			AngularVelocity& angularVelocity = registry.getComponent<AngularVelocity>(entity);
 			Torque& torque = registry.getComponent<Torque>(entity);
 			InverseInertia& inverseInertia = registry.getComponent<InverseInertia>(entity);
 			angularVelocity.value += (inverseInertia.tensor * torque.value) * dt;
@@ -47,10 +50,10 @@ namespace epl
 
 	void EulerSemiImplicit::integrateAngularVelocity(Registry& registry, float dt, float damping)
 	{
-		for (auto [entity, angularVelocity] : registry.iterate<AngularVelocity>())
+		for (auto [entity, d] : registry.iterate<DynamicBody>())
 		{
+			AngularVelocity& angularVelocity = registry.getComponent<AngularVelocity>(entity);
 			Rotation& rotation = registry.getComponent<Rotation>(entity);
-			
 			Quaternion deltaRotation = { 0, angularVelocity.value.x, angularVelocity.value.y, angularVelocity.value.z };
 			deltaRotation *= .5f * dt;
 			deltaRotation *= rotation.value;

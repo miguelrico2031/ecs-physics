@@ -25,6 +25,6 @@ namespace epl
 
 		bool isIntersectingAABB(const Registry& reg, const Ray& ray, const AABBCollider& collider, Entity entity, RayHit& hit);
 
-		Matrix3x3 calculateInverseInertiaTensor(const Vector3& halfSize, float inverseMass);
+		Matrix3x3 calculateBoxInverseInertiaTensor(const Vector3& halfSize, float inverseMass);
 	}
 }

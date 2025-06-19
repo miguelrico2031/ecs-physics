@@ -66,9 +66,9 @@ int main()
 	epl::World world(regPtr, .05f);
 
 	registerCustomComponents(*regPtr);
-	createFloor(world);
-	createBodies(world);
-	//createBigCuboid(world);
+	//createFloor(world);
+	//createBodies(world);
+	createBigCuboid(world);
 
 	const float fixedDelta = 1.f / 60.f;
 	float accumulator = 0.f;
@@ -394,12 +394,12 @@ void raycastAtMousePos(epl::World& world, Camera& camera, bool multiple)
 		{
 			reg.removeComponent<custom::RayHitPoint>(rayHitPointEntity);
 		}
-	}
+	} 
 }
 
 void shootBody(epl::World& world, Camera& camera)
 {
-	constexpr float forceMagnitude = 200.f;
+	constexpr float forceMagnitude = 400.f;
 	epl::Registry& reg = world.getRegistry();
 	Vector2 mousePos = { GetScreenWidth() / 2.f,  GetScreenHeight() / 2.f };
 	Ray raylibRay = GetScreenToWorldRay(mousePos, camera);
@@ -407,7 +407,6 @@ void shootBody(epl::World& world, Camera& camera)
 	epl::RayHit rayHit;
 	if (world.raycast(ray, rayHit) && reg.hasComponent<epl::Force>(rayHit.entity) && reg.hasComponent<epl::Torque>(rayHit.entity))
 	{
-		//epl::Vector3 direction = epl::Vector3::normalize({ ray.direction.x, 0.f, ray.direction.z });
 		world.addForceAtPoint(rayHit.entity, ray.direction * forceMagnitude, rayHit.point);
 	}
 }

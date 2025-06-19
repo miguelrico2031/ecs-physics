@@ -261,4 +261,12 @@ namespace epl
 			Math::abs(Vector3::dot(axisToProject, boxAxes[2]) * boxHalfSize.z);
 	}
 
+
+	Matrix3x3 OBBColliderFuncs::calculateRotatedInverseInertiaTensor(const Matrix3x3& localInvInertia, const Quaternion& rotation)
+	{
+		Matrix3x3 rotationMatrix(rotation);
+		Matrix3x3 rotationMatrixTransposed = Matrix3x3::transpose(rotationMatrix);
+		return rotationMatrix * localInvInertia * rotationMatrixTransposed;
+	}
+
 }

@@ -34,7 +34,9 @@ namespace epl
 
 	Entity World::createDynamicBody(float mass, Vector3 position, Quaternion rotation, Vector3 gravity)
 	{
+		assert(mass > Math::epsilon() && "Mass of dynamic body must be greater than zero.");
 		Entity e = m_registry->createEntity();
+		m_registry->addComponent<DynamicBody>(e);
 		m_registry->addComponent<Position>(e, position);
 		m_registry->addComponent<LinearVelocity>(e, Vector3::zero());
 		m_registry->addComponent<Force>(e, Vector3::zero());
@@ -55,29 +57,35 @@ namespace epl
 		Entity e = m_registry->createEntity();
 		m_registry->addComponent<Position>(e, position);
 		m_registry->addComponent<Rotation>(e, rotation);
+		m_registry->addComponent<Mass> (e, 0.f);
 		return e;
 	}
 
-	SphereCollider& World::addSphereColliderToBody(Entity entity, float radius)
+	const SphereCollider& World::addSphereColliderToBody(Entity entity, float radius)
 	{
 		auto& col = m_registry->addComponent<SphereCollider>(entity, radius);
 		//inertia calc if dynamic
-		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, massOpt->inverseMass);
+			const Mass& mass = m_registry->getComponent<Mass>(entity);
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 		return col;
 	}
 
-	BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize)
+	const BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize)
 	{
 		auto& col = m_registry->addComponent<BoxCollider>(entity, halfSize);
 		//inertia calc if dynamic
-		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
-			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(halfSize, massOpt->inverseMass);
-			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
+			const Mass& mass = m_registry->getComponent<Mass>(entity);
+			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(halfSize, mass.inverseMass);
+			m_registry->addComponent<LocalInverseInertia>(entity, localInvInertia);
+			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
+			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
 		}
 		return col;
 	}
@@ -159,9 +167,10 @@ namespace epl
 		auto& col = m_registry->getComponent<SphereCollider>(entity);
 		col.radius = newRadius;
 		//update inertia tensor if dynamic
-		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(newRadius, (*massOpt).inverseMass);
+			const Mass& mass = m_registry->getComponent<Mass>(entity);
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(newRadius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 	}
@@ -171,10 +180,63 @@ namespace epl
 		auto& col = m_registry->getComponent<BoxCollider>(entity);
 		col.halfSize = newHalfSize;
 		//update inertia tensor if dynamic
-		if (auto& massOpt = m_registry->tryGetComponent<Mass>(entity))
+		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
-			auto invInertia = AABBColliderFuncs::calculateInverseInertiaTensor(newHalfSize, (*massOpt).inverseMass);
+			const Mass& mass = m_registry->getComponent<Mass>(entity);
+			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(newHalfSize, mass.inverseMass);
+			m_registry->getComponent<LocalInverseInertia>(entity).tensor = localInvInertia;
+			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
+			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
+		}
+	}
+
+
+	void World::changeDynamicBodyMass(Entity entity, float newMass)
+	{
+		assert(newMass > Math::epsilon() && "Mass of dynamic body must be greater than zero.");
+		assert(m_registry->hasComponent<DynamicBody>(entity) && "Cannot change mass of kinematic body.");
+		Mass& mass = m_registry->addOrSetComponent<Mass>(entity, newMass); //set so cosntructor is called and inv mass is computed
+
+		if (const auto& sphereOpt = m_registry->tryGetComponent<SphereCollider>(entity))
+		{
+			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(sphereOpt->radius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
+		}
+
+		else if (const auto& boxOpt = m_registry->tryGetComponent<BoxCollider>(entity))
+		{
+			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(boxOpt->halfSize, mass.inverseMass);
+			m_registry->getComponent<LocalInverseInertia>(entity).tensor = localInvInertia;
+			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
+			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
+		}
+	}
+
+	void World::setDynamic(Entity entity, bool setToDynamic)
+	{
+		bool dynamic = m_registry->hasComponent<DynamicBody>(entity);
+		if ((dynamic && setToDynamic) || (!dynamic && !setToDynamic))
+		{
+			return;
+		}
+
+		Mass& mass = m_registry->getComponent<Mass>(entity);
+		if (!setToDynamic) //change dynamic body to being kinematic
+		{
+			m_registry->removeComponent<DynamicBody>(entity);
+			m_dynamicBodiesMasses[entity] = mass.mass;
+			mass.mass = 0.f;
+			mass.inverseMass = 0.f;
+			m_registry->getComponent<LinearVelocity>(entity).value = Vector3::zero();
+			m_registry->getComponent<AngularVelocity>(entity).value = Vector3::zero();
+		}
+		else
+		{
+			assert(m_dynamicBodiesMasses.find(entity) != m_dynamicBodiesMasses.end() && "Cannot set to dynamic a body that was not created dynamic.");
+			m_registry->addComponent<DynamicBody>(entity);
+			m_registry->addOrSetComponent<Mass>(entity, m_dynamicBodiesMasses[entity]);
 		}
 	}
 
@@ -190,6 +252,8 @@ namespace epl
 		m_registry->registerComponentType<Gravity>();
 		m_registry->registerComponentType<Mass>();
 		m_registry->registerComponentType<InverseInertia>();
+		m_registry->registerComponentType<LocalInverseInertia>();
+		m_registry->registerComponentType<DynamicBody>();
 	}
 
 	void World::registerBuiltInColliders()

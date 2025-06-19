@@ -1,6 +1,6 @@
 #pragma once 
 #include <Physics/Colliders/BaseCollider.h>
-
+#include <Math/Quaternion.h>
 namespace epl
 {
 	class Registry;
@@ -39,6 +39,8 @@ namespace epl
 
 		float projectBox(const Vector3& axisToProject, const Vector3 boxAxes[3], const Vector3& boxHalfSize);
 
+
+		Matrix3x3 calculateRotatedInverseInertiaTensor(const Matrix3x3& localInvInertia, const Quaternion& rotation);
 
 	}
 
