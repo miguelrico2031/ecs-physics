@@ -9,8 +9,7 @@ namespace epl
 		Entity entity1;
 		Entity entity2;
 		Vector3 normal;
-		Vector3 contactPoint1;
-		Vector3 contactPoint2;
+		Vector3 contactPoint;
 		float depth;
 	};
 }

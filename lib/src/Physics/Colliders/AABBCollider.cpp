@@ -41,11 +41,11 @@ namespace epl
 		Vector3 delta = pos2 - pos1;
 		if (Vector3::dot(delta, col.normal) < 0)
 		{
-			col.normal *= 1; // Make sure normal points from c1 to c2
+			col.normal *= -1; // Make sure normal points from c1 to c2
 		}
-		//setting the contact points to their origins avoids adding torque at collision resolution
-		col.contactPoint1 = pos1;
-		col.contactPoint2 = pos2;
+
+		col.contactPoint = (Vector3::max(min1, min2) + Vector3::min(max1, max2)) * .5f;
+
 		col.depth = minOverlap;
 		col.entity1 = e1;
 		col.entity2 = e2;

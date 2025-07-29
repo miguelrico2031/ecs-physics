@@ -1,7 +1,7 @@
 #include <Physics/World.h>
 #include <Physics/Motion/Integrators/EulerSemiImplicit.h>
 #include <Physics/Collision/IterativeCollisionDetection.h>
-#include <Physics/Collision/ProjectionSolver.h>
+#include <Physics/Collision/ProjectionAndImpulseSolver.h>
 #include <Physics/Raycast/IterativeRaycaster.h>
 namespace epl
 {
@@ -11,7 +11,7 @@ namespace epl
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
-		m_collisionResolutionSystem(std::make_unique<ProjectionSolver>()),
+		m_collisionResolutionSystem(std::make_unique<ProjectionAndImpulseSolver>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -26,7 +26,7 @@ namespace epl
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
-		m_collisionResolutionSystem(std::make_unique<ProjectionSolver>()),
+		m_collisionResolutionSystem(std::make_unique<ProjectionAndImpulseSolver>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -60,7 +60,6 @@ namespace epl
 		Entity e = m_registry->createEntity();
 		m_registry->addComponent<Position>(e, position);
 		m_registry->addComponent<Rotation>(e, rotation);
-		m_registry->addComponent<Mass> (e, 0.f);
 		return e;
 	}
 
@@ -130,6 +129,7 @@ namespace epl
 
 	void World::addForce(Entity entity, Vector3 force)
 	{
+		assert(m_registry->hasComponent<DynamicBody>(entity) && "Kinematic bodies cannot move with accelerations.");
 		m_registry->getComponent<Force>(entity).value += force;
 	}
 
@@ -140,6 +140,7 @@ namespace epl
 
 	void World::addForceAtPoint(Entity entity, Vector3 force, Vector3 point)
 	{
+		assert(m_registry->hasComponent<DynamicBody>(entity) && "Kinematic bodies cannot move with accelerations.");
 		m_registry->getComponent<Force>(entity).value += force;
 		Position position = m_registry->getComponent<Position>(entity);
 		Vector3 pointLocalPos = point - position.value;
@@ -149,6 +150,7 @@ namespace epl
 
 	void World::addAcceleration(Entity entity, Vector3 acceleration)
 	{
+		assert(m_registry->hasComponent<DynamicBody>(entity) && "Kinematic bodies cannot move with accelerations.");
 		float mass = m_registry->getComponent<Mass>(entity).mass;
 		m_registry->getComponent<Force>(entity).value += mass * acceleration;
 	}
@@ -160,6 +162,7 @@ namespace epl
 
 	void World::addTorque(Entity entity, Vector3 torque)
 	{
+		assert(m_registry->hasComponent<DynamicBody>(entity) && "Kinematic bodies cannot move with accelerations.");
 		m_registry->getComponent<Torque>(entity).value += torque;
 	}
 
@@ -221,6 +224,7 @@ namespace epl
 		}
 	}
 
+
 	void World::setDynamic(Entity entity, bool setToDynamic)
 	{
 		bool dynamic = m_registry->hasComponent<DynamicBody>(entity);
@@ -229,10 +233,10 @@ namespace epl
 			return;
 		}
 
-		Mass& mass = m_registry->getComponent<Mass>(entity);
 		if (!setToDynamic) //change dynamic body to being kinematic
 		{
 			m_registry->removeComponent<DynamicBody>(entity);
+			Mass& mass = m_registry->getComponent<Mass>(entity);
 			m_dynamicBodiesMasses[entity] = mass.mass;
 			mass.mass = 0.f;
 			mass.inverseMass = 0.f;
@@ -246,6 +250,19 @@ namespace epl
 			m_registry->addOrSetComponent<Mass>(entity, m_dynamicBodiesMasses[entity]);
 		}
 	}
+
+	void World::changeRestitution(Entity entity, float restitution)
+	{
+		if (auto& pmOpt = m_registry->tryGetComponent<PhysicMaterial>(entity))
+		{
+			pmOpt->restitution = restitution;
+		}
+		else
+		{
+			m_registry->addComponent<PhysicMaterial>(entity, restitution);
+		}
+	}
+
 
 
 	void World::registerPhysicsComponents()
@@ -261,6 +278,7 @@ namespace epl
 		m_registry->registerComponentType<InverseInertia>();
 		m_registry->registerComponentType<LocalInverseInertia>();
 		m_registry->registerComponentType<DynamicBody>();
+		m_registry->registerComponentType<PhysicMaterial>();
 	}
 
 	void World::registerBuiltInColliders()

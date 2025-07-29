@@ -49,10 +49,7 @@ namespace epl
 			col.normal = -col.normal;
 		}
 
-		//TODO: check if contact points are valid
-		col.contactPoint1 = position1 + col.normal * (col.depth * 0.5f);
-		col.contactPoint2 = position2 - col.normal * (col.depth * 0.5f);
-
+		col.contactPoint = (position1 + position2) * 0.5f - col.normal * (col.depth * 0.5f);
 
 		return true;
 	}
@@ -97,10 +94,7 @@ namespace epl
 			col.normal = -col.normal;
 		}
 
-		//TODO: check if contact points are valid
-		col.contactPoint1 = position1 + col.normal * (col.depth * 0.5f);
-		col.contactPoint2 = position2 - col.normal * (col.depth * 0.5f);
-
+		col.contactPoint = (position1 + position2) * 0.5f - col.normal * (col.depth * 0.5f);
 
 		return true;
 	}
@@ -124,8 +118,7 @@ namespace epl
 		}
 
 		//transform results back to world space
-		col.contactPoint1 = (obbLocalToWorldSpaceTransform * col.contactPoint1) + obbPosition;
-		col.contactPoint2 = (obbLocalToWorldSpaceTransform * col.contactPoint2) + obbPosition;
+		col.contactPoint = (obbLocalToWorldSpaceTransform * col.contactPoint) + obbPosition;
 		col.normal = Vector3::normalize(obbLocalToWorldSpaceTransform * col.normal);
 		col.entity1 = e1;
 		col.entity2 = e2;

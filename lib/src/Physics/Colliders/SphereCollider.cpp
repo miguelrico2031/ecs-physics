@@ -24,15 +24,15 @@ namespace epl
 		if (distance > Math::epsilon())
 		{
 			col.normal = delta / distance;
-			col.contactPoint1 = pos1 + col.normal * c1.radius;
-			col.contactPoint2 = pos2 - col.normal * c2.radius;
+			Vector3 contactPoint1 = pos1 + col.normal * c1.radius;
+			Vector3 contactPoint2 = pos2 - col.normal * c2.radius;
+			col.contactPoint = (contactPoint1 + contactPoint2) * .5f;
 			col.depth = totalRadius - distance;
 		}
 		else //the spheres at almost entirely overlapped
 		{
 			col.normal = { 0, 1, 0 }; //arbitrary normal
-			col.contactPoint1 = pos1;
-			col.contactPoint2 = pos2;
+			col.contactPoint = (pos1 + pos2) * .5f;
 			col.depth = totalRadius;
 
 		}
@@ -76,6 +76,7 @@ namespace epl
 		{
 			col.normal = delta / distance;
 			col.depth = sphereRadius - distance;
+			col.contactPoint = closestPoint;
 		}
 		else //sphere center is inside the AABB
 		{
@@ -96,10 +97,8 @@ namespace epl
 			}
 
 			col.depth = sphereRadius;
+			col.contactPoint = spherePosition + col.normal * sphereRadius;
 		}
-		//TODO: check if these contact points work well in collision resolution
-		col.contactPoint1 = spherePosition + col.normal * sphereRadius;
-		col.contactPoint2 = closestPoint;
 		return true;
 	}
 

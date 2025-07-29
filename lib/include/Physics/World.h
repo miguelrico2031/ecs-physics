@@ -80,7 +80,13 @@ namespace epl
 		//this only works properly if the entity started its lifetime as a dynamic body (createDynamicBody())
 		//and it needs to alternate between being on and off the physics simulation.
 		//a createKinematicBody() entity will cause undefined behaviour in this method.
+		//when switching from dynamic to kinematic (setToDynamic = false),
+		//this does not remove the dynamic components such as LinearVelocity, AngularVelocity and Mass, but removes the DynamicBody component.
+		//that component's absence prevents any system in this library from accessing the entity's dynamic components
+		//so if an entity becomes kinematic it will neither be moved by the integrator, nor by the collision solver.
 		void setDynamic(Entity entity, bool setToDynamic);
+		//works on kinematic and dynamic bodies. by default no body has a physic material component, but this method adds one if needed
+		void changeRestitution(Entity entity, float restitution);
 
 	private:
 		void registerPhysicsComponents();

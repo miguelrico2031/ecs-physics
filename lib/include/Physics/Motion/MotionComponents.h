@@ -74,4 +74,10 @@ namespace epl
 
 	struct DynamicBody {};
 
+	struct PhysicMaterial
+	{
+		float restitution;
+		PhysicMaterial(float restitution_) : restitution(restitution_) {}
+	};
+
 }

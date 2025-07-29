@@ -23,9 +23,10 @@ namespace custom
 
 struct
 {
-	const int numBodies = 2;
+	const int numBodies = 5;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
-	const float spread = 5.f;
+	const float spread = 20.f;
+	const float bodiesRestitution = 0.75f;
 } SimulationParams;
 
 static bool paused = false;
@@ -63,7 +64,7 @@ int main()
 	initWindowAndCamera(camera);
 
 	std::shared_ptr<epl::Registry> regPtr = std::make_shared<epl::Registry>(2048);
-	epl::World world(regPtr, .05f);
+	epl::World world(regPtr, .2f);
 
 	registerCustomComponents(*regPtr);
 	createFloor(world);
@@ -126,8 +127,8 @@ void registerCustomComponents(epl::Registry& reg)
 
 void createFloor(epl::World& world)
 {
-	auto e = world.createKinematicBody(epl::Vector3{ 0.f, -.25f, 0.f });
-	world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ 30.f, .25f, 30.f });
+	auto e = world.createKinematicBody(epl::Vector3{ 0.f, -2, 0.f });
+	world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ 30.f, 2, 30.f });
 }
 
 void createBodies(epl::World& world)
@@ -136,24 +137,28 @@ void createBodies(epl::World& world)
 	{
 		epl::Vector3 pos = SimulationParams.startPos + randomInUnitSphere() * SimulationParams.spread;
 		auto e = world.createDynamicBody(1, pos);
+		world.changeRestitution(e, SimulationParams.bodiesRestitution);
+		
+		//world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ .5f, .5f,.5f });
 
-		//if (i % 2 == 0)
-		//{
-		//	world.addSphereColliderToBody(e, .5f);
-		//}
-		//else
+		if (i % 2 == 0)
+		{
+			world.addSphereColliderToBody(e, .5f);
+		}
+		else
 		{
 			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
 		}
-		auto angles = randomEulerAngles();
-		world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
+		//auto angles = randomEulerAngles();
+		//world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
 	}
 }
 
 void createBigCuboid(epl::World& world)
 {
-	auto e = world.createDynamicBody(5.f);
-	world.getRegistry().removeComponent<epl::Gravity>(e);
+	auto e = world.createDynamicBody(5.f, epl::Vector3::zero(), epl::Quaternion::identity(), epl::Vector3::zero());
+	world.changeRestitution(e, SimulationParams.bodiesRestitution);
+	//world.getRegistry().removeComponent<epl::Gravity>(e);
 	world.addBoxColliderToBody(e, epl::Vector3{ 5, 1, 1 });
 }
 
@@ -261,6 +266,7 @@ void renderCollisionNormals(const epl::World& world)
 	{
 		epl::Vector3 pos1 = world.getRegistry().getComponent<epl::Position>(collision.entity1).value;
 		DrawLine3D(toRaylib(pos1), toRaylib(pos1 + collision.normal * 2.f), YELLOW);
+		DrawSphere(toRaylib(collision.contactPoint), .05f, MAGENTA);
 	}
 }
 
