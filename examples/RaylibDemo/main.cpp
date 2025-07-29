@@ -23,7 +23,7 @@ namespace custom
 
 struct
 {
-	const int numBodies = 20;
+	const int numBodies = 2;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	const float spread = 5.f;
 } SimulationParams;
@@ -66,9 +66,9 @@ int main()
 	epl::World world(regPtr, .05f);
 
 	registerCustomComponents(*regPtr);
-	//createFloor(world);
-	//createBodies(world);
-	createBigCuboid(world);
+	createFloor(world);
+	createBodies(world);
+	//createBigCuboid(world);
 
 	const float fixedDelta = 1.f / 60.f;
 	float accumulator = 0.f;

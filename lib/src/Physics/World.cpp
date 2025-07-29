@@ -1,6 +1,7 @@
 #include <Physics/World.h>
 #include <Physics/Motion/Integrators/EulerSemiImplicit.h>
 #include <Physics/Collision/IterativeCollisionDetection.h>
+#include <Physics/Collision/ProjectionSolver.h>
 #include <Physics/Raycast/IterativeRaycaster.h>
 namespace epl
 {
@@ -10,6 +11,7 @@ namespace epl
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
+		m_collisionResolutionSystem(std::make_unique<ProjectionSolver>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -24,6 +26,7 @@ namespace epl
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
+		m_collisionResolutionSystem(std::make_unique<ProjectionSolver>()),
 		m_raycastSystem(std::make_unique<IterativeRaycaster>()),
 		m_damping(damping)
 	{
@@ -107,6 +110,10 @@ namespace epl
 			m_collisions.clear();
 			m_collisionDetectionSystem->detectCollisions(*m_registry, *m_colliderRegistry, m_collisions);
 			//solve collisions
+			if (!m_collisions.empty())
+			{
+				m_collisionResolutionSystem->resolveCollisions(*m_registry, m_collisions);
+			}
 		}
 	}
 

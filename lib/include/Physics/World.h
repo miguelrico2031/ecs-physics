@@ -8,6 +8,7 @@
 #include <Physics/Colliders/AABBCollider.h>
 #include <Physics/Colliders/OBBCollider.h>
 #include <Physics/Collision/ICollisionDetectionSystem.h>
+#include <Physics/Collision/ICollisionResolutionSystem.h>
 #include <Physics/Collision/Collision.h>
 #include <Physics/Raycast/IRaycastSystem.h>
 #include <memory>
@@ -90,6 +91,7 @@ namespace epl
 		std::unique_ptr<IIntegrationSystem> m_integrationSystem;
 		std::unique_ptr<GravitySystem> m_gravitySystem;
 		std::unique_ptr<ICollisionDetectionSystem> m_collisionDetectionSystem;
+		std::unique_ptr<ICollisionResolutionSystem> m_collisionResolutionSystem;
 		std::unique_ptr<IRaycastSystem> m_raycastSystem;
 		std::vector<Collision> m_collisions;
 		float m_damping;
