@@ -26,7 +26,8 @@ struct
 	const int numBodies = 10;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	const float spread = 20.f;
-	const float bodiesRestitution = 0.75f;
+	const float bodiesRestitution = 0.5f;
+	const float bodiesFriction = 0.5f;
 } SimulationParams;
 
 static bool paused = false;
@@ -141,8 +142,10 @@ void createBodies(epl::World& world)
 		pos.y = 20;
 
 		auto e = world.createDynamicBody(1, pos);
-		world.changeRestitution(e, SimulationParams.bodiesRestitution);
-		
+		auto& pm = world.getRegistry().getComponent<epl::PhysicMaterial>(e);
+		pm.restitution = SimulationParams.bodiesRestitution;
+		pm.friction = SimulationParams.bodiesFriction;
+
 
 		if (i % 2 == 0)
 		{
@@ -160,7 +163,7 @@ void createBodies(epl::World& world)
 void createBigCuboid(epl::World& world)
 {
 	auto e = world.createDynamicBody(5.f, epl::Vector3::zero(), epl::Quaternion::identity(), epl::Vector3::zero());
-	world.changeRestitution(e, SimulationParams.bodiesRestitution);
+	world.getRegistry().getComponent<epl::PhysicMaterial>(e).restitution = SimulationParams.bodiesRestitution;
 	//world.getRegistry().removeComponent<epl::Gravity>(e);
 	world.addBoxColliderToBody(e, epl::Vector3{ 5, 1, 1 });
 }

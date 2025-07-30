@@ -8,6 +8,10 @@ namespace epl::Math
 	{
 		return 0.0001f;
 	}
+	inline constexpr float epsilonSquared() noexcept
+	{
+		return epsilon() * epsilon();
+	}
 
 	inline constexpr float infinity() noexcept
 	{

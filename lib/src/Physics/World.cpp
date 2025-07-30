@@ -52,6 +52,7 @@ namespace epl
 		{
 			m_registry->addComponent<Gravity>(e, gravity);
 		}
+		m_registry->addComponent<PhysicMaterial>(e, 0.f, .5f);
 		return e;
 	}
 
@@ -256,18 +257,6 @@ namespace epl
 			assert(m_dynamicBodiesMasses.find(entity) != m_dynamicBodiesMasses.end() && "Cannot set to dynamic a body that was not created dynamic.");
 			m_registry->addComponent<DynamicBody>(entity);
 			m_registry->addOrSetComponent<Mass>(entity, m_dynamicBodiesMasses[entity]);
-		}
-	}
-
-	void World::changeRestitution(Entity entity, float restitution)
-	{
-		if (auto& pmOpt = m_registry->tryGetComponent<PhysicMaterial>(entity))
-		{
-			pmOpt->restitution = restitution;
-		}
-		else
-		{
-			m_registry->addComponent<PhysicMaterial>(entity, restitution);
 		}
 	}
 

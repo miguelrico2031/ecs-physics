@@ -90,8 +90,6 @@ namespace epl
 		//that component's absence prevents any system in this library from accessing the entity's dynamic components
 		//so if an entity becomes kinematic it will neither be moved by the integrator, nor by the collision solver.
 		void setDynamic(Entity entity, bool setToDynamic);
-		//works on kinematic and dynamic bodies. by default no body has a physic material component, but this method adds one if needed
-		void changeRestitution(Entity entity, float restitution);
 
 	private:
 		void registerPhysicsComponents();

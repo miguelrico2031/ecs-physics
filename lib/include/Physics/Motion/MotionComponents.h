@@ -77,7 +77,8 @@ namespace epl
 	struct PhysicMaterial
 	{
 		float restitution;
-		PhysicMaterial(float restitution_) : restitution(restitution_) {}
+		float friction;
+		PhysicMaterial(float restitution_, float friction_) : restitution(restitution_), friction(friction_) {}
 	};
 
 }
