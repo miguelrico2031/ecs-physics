@@ -23,7 +23,7 @@ namespace custom
 
 struct
 {
-	const int numBodies = 5;
+	const int numBodies = 10;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	const float spread = 20.f;
 	const float bodiesRestitution = 0.75f;
@@ -128,7 +128,8 @@ void registerCustomComponents(epl::Registry& reg)
 void createFloor(epl::World& world)
 {
 	auto e = world.createKinematicBody(epl::Vector3{ 0.f, -2, 0.f });
-	world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ 30.f, 2, 30.f });
+	world.addAABBColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
+	//world.addBoxColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
 }
 
 void createBodies(epl::World& world)
@@ -136,10 +137,12 @@ void createBodies(epl::World& world)
 	for (size_t i = 0; i < SimulationParams.numBodies; i++)
 	{
 		epl::Vector3 pos = SimulationParams.startPos + randomInUnitSphere() * SimulationParams.spread;
+		
+		pos.y = 20;
+
 		auto e = world.createDynamicBody(1, pos);
 		world.changeRestitution(e, SimulationParams.bodiesRestitution);
 		
-		//world.getRegistry().addComponent<epl::AABBCollider>(e, epl::Vector3{ .5f, .5f,.5f });
 
 		if (i % 2 == 0)
 		{
@@ -266,7 +269,11 @@ void renderCollisionNormals(const epl::World& world)
 	{
 		epl::Vector3 pos1 = world.getRegistry().getComponent<epl::Position>(collision.entity1).value;
 		DrawLine3D(toRaylib(pos1), toRaylib(pos1 + collision.normal * 2.f), YELLOW);
-		DrawSphere(toRaylib(collision.contactPoint), .05f, MAGENTA);
+		
+		for (size_t i = 0; i < collision.contactPointsCount; i++)
+		{
+			DrawSphere(toRaylib(collision.contactPoints[i]), .075f, MAGENTA);
+		}
 	}
 }
 

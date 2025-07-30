@@ -25,6 +25,8 @@ namespace epl
 
 		bool isIntersectingAABB(const Registry& reg, const Ray& ray, const AABBCollider& collider, Entity entity, RayHit& hit);
 
+		bool isPointInsideBox(const Vector3& point, const Vector3& halfSize);
+
 		Matrix3x3 calculateBoxInverseInertiaTensor(const Vector3& halfSize, float inverseMass);
 	}
 }

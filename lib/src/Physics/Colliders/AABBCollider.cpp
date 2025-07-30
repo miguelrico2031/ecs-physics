@@ -41,14 +41,72 @@ namespace epl
 		Vector3 delta = pos2 - pos1;
 		if (Vector3::dot(delta, col.normal) < 0)
 		{
-			col.normal *= -1; // Make sure normal points from c1 to c2
+			col.normal = -col.normal; // Make sure normal points from c1 to c2
 		}
 
-		col.contactPoint = (Vector3::max(min1, min2) + Vector3::min(max1, max2)) * .5f;
+
+		//col.contactPoint = (Vector3::max(min1, min2) + Vector3::min(max1, max2)) * .5f;
 
 		col.depth = minOverlap;
 		col.entity1 = e1;
 		col.entity2 = e2;
+
+		col.contactPointsCount = 4;
+
+
+
+		// Interseccion del volumen (caja de contacto)
+		Vector3 contactMin = Vector3::max(min1, min2);
+		Vector3 contactMax = Vector3::min(max1, max2);
+
+		Vector3 contactCenter = (contactMin + contactMax) * 0.5f;
+
+		// Lados del volumen de contacto
+		Vector3 size = contactMax - contactMin;
+
+		// Elegimos la cara perpendicular a la normal (plano de contacto)
+		// y obtenemos los 4 vertices
+		if (Math::abs(col.normal.x) > 0.9f)
+		{
+			// Contacto en eje X -> cara YZ
+			Vector3 y = { 0, size.y * 0.5f, 0 };
+			Vector3 z = { 0, 0, size.z * 0.5f };
+			Vector3 center = contactCenter;
+			col.contactPoints[0] = center + y + z;
+			col.contactPoints[1] = center + y - z;
+			col.contactPoints[2] = center - y + z;
+			col.contactPoints[3] = center - y - z;
+
+		}
+		else if (Math::abs(col.normal.y) > 0.9f)
+		{
+			// Contacto en eje Y -> cara XZ
+			Vector3 x = { size.x * 0.5f, 0, 0 };
+			Vector3 z = { 0, 0, size.z * 0.5f };
+			Vector3 center = contactCenter;
+			col.contactPoints[0] = center + x + z, col.depth;
+			col.contactPoints[1] = center + x - z, col.depth;
+			col.contactPoints[2] = center - x + z, col.depth;
+			col.contactPoints[3] = center - x - z, col.depth;
+
+		}
+		else
+		{
+			// Contacto en eje Z -> cara XY
+			Vector3 x = { size.x * 0.5f, 0, 0 };
+			Vector3 y = { 0, size.y * 0.5f, 0 };
+			Vector3 center = contactCenter;
+			col.contactPoints[0] = center + x + y, col.depth;
+			col.contactPoints[1] = center + x - y, col.depth;
+			col.contactPoints[2] = center - x + y, col.depth;
+			col.contactPoints[3] = center - x - y, col.depth;
+		}
+
+
+
+
+
+
 		return true;
 	}
 
@@ -122,6 +180,13 @@ namespace epl
 		Position pos = reg.getComponent<Position>(entity);
 		return isIntersectingBox(ray, pos.value, collider.halfSize, hit);
 	}
+
+
+	bool AABBColliderFuncs::isPointInsideBox(const Vector3& point, const Vector3& halfSize)
+	{
+		return Math::abs(point.x) <= halfSize.x && Math::abs(point.y) <= halfSize.y && Math::abs(point.z) <= halfSize.z;
+	}
+
 
 	Matrix3x3 AABBColliderFuncs::calculateBoxInverseInertiaTensor(const Vector3& halfSize, float inverseMass)
 	{

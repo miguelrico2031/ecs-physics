@@ -6,6 +6,7 @@
 #include <Physics/Motion/MotionComponents.h>
 #include <ECS/Registry.h>
 #include <Math/Matrix3x3.h>
+#include <vector>
 #include <iostream>
 
 namespace epl
@@ -13,10 +14,10 @@ namespace epl
 	bool OBBColliderFuncs::isCollidingOBBOBB(const Registry& reg, const OBBCollider& c1, const OBBCollider& c2,
 		Entity e1, Entity e2, Collision& col)
 	{
-		Vector3 position1 = reg.getComponent<Position>(e1).value;
-		Vector3 position2 = reg.getComponent<Position>(e2).value;
-		Quaternion rotation1 = reg.getComponent<Rotation>(e1).value;
-		Quaternion rotation2 = reg.getComponent<Rotation>(e2).value;
+		const Vector3& position1 = reg.getComponent<Position>(e1).value;
+		const Vector3& position2 = reg.getComponent<Position>(e2).value;
+		const Quaternion& rotation1 = reg.getComponent<Rotation>(e1).value;
+		const Quaternion& rotation2 = reg.getComponent<Rotation>(e2).value;
 
 		Vector3 axes1[3]
 		{
@@ -34,7 +35,7 @@ namespace epl
 
 		Vector3 direction = position2 - position1;
 
-		
+
 		if (testAllSeparatingAxes(axes1, axes2, c1.halfSize, c2.halfSize, direction, col))
 		{
 			return false;
@@ -49,7 +50,62 @@ namespace epl
 			col.normal = -col.normal;
 		}
 
-		col.contactPoint = (position1 + position2) * 0.5f - col.normal * (col.depth * 0.5f);
+
+
+		//Find the contact points manifold, simpler approach than clipping, the points are found by
+		//detecting all of the vertices of each box that are inside the other box
+
+		Vector3 vertices1[8];
+		Vector3 vertices2[8];
+		getBoxVertices(position1, c1.halfSize, axes1, vertices1);
+		getBoxVertices(position2, c2.halfSize, axes2, vertices2);
+
+		Quaternion inverseRotation1 = Quaternion::conjugate(rotation1);
+		Quaternion inverseRotation2 = Quaternion::conjugate(rotation2);
+
+		std::vector<Vector3> contactPoints;
+		contactPoints.reserve(8);
+
+		//check which vertices of the box 1 are inside the box 2
+		for (const Vector3& vertex1 : vertices1)
+		{
+			//transform the vertex to the obb local space so it acts as an aabb
+			Vector3 localPoint = Quaternion::rotate(inverseRotation2, vertex1 - position2);
+			if (AABBColliderFuncs::isPointInsideBox(localPoint, c2.halfSize))
+			{
+				contactPoints.push_back(vertex1);
+			}
+		}
+
+		//check which vertices of the box 2 are inside the box 1
+		for (const Vector3& vertex2 : vertices2)
+		{
+			//transform the vertex to the obb local space so it acts as an aabb
+			Vector3 localPoint = Quaternion::rotate(inverseRotation1, vertex2 - position1);
+			if (AABBColliderFuncs::isPointInsideBox(localPoint, c1.halfSize))
+			{
+				contactPoints.push_back(vertex2);
+			}
+		}
+
+		//assert(!contactPoints.empty() && "No contact points found on collision");
+
+		// Get the 4 contact points closer to the collision center
+		if (contactPoints.size() > 4)
+		{
+			Vector3 center = (position1 + position2) * 0.5f;
+			std::sort(contactPoints.begin(), contactPoints.end(), [&](const Vector3& a, const Vector3& b)
+				{
+					return Vector3::squaredMagnitude(a - center) < Vector3::squaredMagnitude(b - center);
+				});
+			contactPoints.resize(4);
+		}
+		col.contactPointsCount = contactPoints.size();
+		for (size_t i = 0; i < contactPoints.size(); i++)
+		{
+			col.contactPoints[i] = contactPoints[i];
+		}
+		
 
 		return true;
 	}
@@ -94,12 +150,64 @@ namespace epl
 			col.normal = -col.normal;
 		}
 
-		col.contactPoint = (position1 + position2) * 0.5f - col.normal * (col.depth * 0.5f);
+
+
+		//Find the contact points manifold
+
+		Vector3 vertices1[8];
+		Vector3 vertices2[8];
+		getBoxVertices(position1, c1.halfSize, axes1, vertices1);
+		getBoxVertices(position2, c2.halfSize, axes2, vertices2);
+
+		Quaternion inverseRotation1 = Quaternion::conjugate(rotation1);
+
+		std::vector<Vector3> contactPoints;
+		contactPoints.reserve(8);
+
+		//check which vertices of the box 1(obb) are inside the box 2(aabb)
+		for (const Vector3& vertex1 : vertices1)
+		{
+			//no need to rotate, only transform to aabb origin space
+			Vector3 localPoint = vertex1 - position2;
+			if (AABBColliderFuncs::isPointInsideBox(localPoint, c2.halfSize))
+			{
+				contactPoints.push_back(vertex1);
+			}
+		}
+
+		//check which vertices of the box 2(aabb) are inside the box 1(obb)
+		for (const Vector3& vertex2 : vertices2)
+		{
+			//transform the vertex to the obb local space so it acts as an aabb
+			Vector3 localPoint = Quaternion::rotate(inverseRotation1, vertex2 - position1);
+			if (AABBColliderFuncs::isPointInsideBox(localPoint, c1.halfSize))
+			{
+				contactPoints.push_back(vertex2);
+			}
+		}
+
+		// Get the 4 contact points closer to the collision center
+		if (contactPoints.size() > 4)
+		{
+			Vector3 center = (position1 + position2) * 0.5f;
+			std::sort(contactPoints.begin(), contactPoints.end(), [&](const Vector3& a, const Vector3& b)
+				{
+					return Vector3::squaredMagnitude(a - center) < Vector3::squaredMagnitude(b - center);
+				});
+			contactPoints.resize(4);
+		}
+		col.contactPointsCount = contactPoints.size();
+		for (size_t i = 0; i < contactPoints.size(); i++)
+		{
+			col.contactPoints[i] = contactPoints[i];
+		}
+
+
 
 		return true;
 	}
 
-	bool OBBColliderFuncs::isCollidingSphereOBB(const Registry& reg, const SphereCollider& c1, const OBBCollider& c2, 
+	bool OBBColliderFuncs::isCollidingSphereOBB(const Registry& reg, const SphereCollider& c1, const OBBCollider& c2,
 		Entity e1, Entity e2, Collision& col)
 	{
 		Vector3 spherePosition = reg.getComponent<Position>(e1).value;
@@ -111,14 +219,16 @@ namespace epl
 
 		//sphere position in obb's local space
 		Vector3 localSpherePos = worldToObbLocalSpaceTransform * (spherePosition - obbPosition);
-		
+
 		if (!SphereColliderFuncs::isCollidingSphereBox(localSpherePos, c1.radius, Vector3::zero(), c2.halfSize, col))
 		{
 			return false;
 		}
 
 		//transform results back to world space
-		col.contactPoint = (obbLocalToWorldSpaceTransform * col.contactPoint) + obbPosition;
+		col.contactPoints[0] = (obbLocalToWorldSpaceTransform * col.contactPoints[0]) + obbPosition;
+
+
 		col.normal = Vector3::normalize(obbLocalToWorldSpaceTransform * col.normal);
 		col.entity1 = e1;
 		col.entity2 = e2;
@@ -253,6 +363,23 @@ namespace epl
 			Math::abs(Vector3::dot(axisToProject, boxAxes[1]) * boxHalfSize.y) +
 			Math::abs(Vector3::dot(axisToProject, boxAxes[2]) * boxHalfSize.z);
 	}
+
+
+	void OBBColliderFuncs::getBoxVertices(const Vector3& position, const Vector3& halfSize, const Vector3 axes[3], Vector3 vertices[8])
+	{
+		int i = 0;
+		for (int x = -1; x <= 1; x += 2)
+		{
+			for (int y = -1; y <= 1; y += 2)
+			{
+				for (int z = -1; z <= 1; z += 2)
+				{
+					vertices[i++] = position + axes[0] * (x * halfSize.x) + axes[1] * (y * halfSize.y) + axes[2] * (z * halfSize.z);
+				}
+			}
+		}
+	}
+
 
 
 	Matrix3x3 OBBColliderFuncs::calculateRotatedInverseInertiaTensor(const Matrix3x3& localInvInertia, const Quaternion& rotation)

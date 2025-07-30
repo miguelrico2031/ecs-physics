@@ -92,6 +92,14 @@ namespace epl
 		return col;
 	}
 
+	const AABBCollider& World::addAABBColliderToBody(Entity entity, Vector3 halfSize)
+	{
+		assert(!m_registry->hasComponent<DynamicBody>(entity) && "Cannot add AABB to dynamic body.");
+		auto& col = m_registry->addComponent<AABBCollider>(entity, halfSize);
+
+		return col;
+	}
+
 
 
 	void World::step(float timeStep, unsigned int substeps)

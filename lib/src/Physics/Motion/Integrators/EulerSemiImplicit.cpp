@@ -5,6 +5,10 @@
 
 namespace epl
 {
+	//TODO: don't hardcode these
+	constexpr float MAX_SQ_LINEAR_VELOCITY = 5000 * 5000;
+	constexpr float MAX_SQ_ANGULAR_VELOCITY = 100 * 100;
+
 	void EulerSemiImplicit::integrate(Registry& registry, float dt, float damping)
 	{
 		float currentStepDampingFactor = powf(1.f - damping, dt);
@@ -21,7 +25,11 @@ namespace epl
 			LinearVelocity& velocity = registry.getComponent<LinearVelocity>(entity);
 			Force& force = registry.getComponent<Force>(entity);
 			const Mass& mass = registry.getComponent<Mass>(entity);
-			velocity.value += force.value * (mass.inverseMass * dt);
+			Vector3 newVelocity = velocity.value + force.value * (mass.inverseMass * dt);
+			if (Vector3::squaredMagnitude(newVelocity) < MAX_SQ_LINEAR_VELOCITY)
+			{
+				velocity.value = newVelocity;
+			}
 			force.value = Vector3::zero(); // reset the force sum in the same iteration
 		}
 	}
@@ -43,7 +51,12 @@ namespace epl
 			AngularVelocity& angularVelocity = registry.getComponent<AngularVelocity>(entity);
 			Torque& torque = registry.getComponent<Torque>(entity);
 			InverseInertia& inverseInertia = registry.getComponent<InverseInertia>(entity);
-			angularVelocity.value += (inverseInertia.tensor * torque.value) * dt;
+			Vector3 newAngVelocity = angularVelocity.value + (inverseInertia.tensor * torque.value) * dt;
+			if (Vector3::squaredMagnitude(newAngVelocity) < MAX_SQ_ANGULAR_VELOCITY)
+			{
+				angularVelocity.value = newAngVelocity;
+			}
+
 			torque.value = Vector3::zero();
 		}
 	}

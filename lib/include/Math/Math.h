@@ -1,5 +1,7 @@
 #pragma once
 #include <limits>
+#include <cassert>
+#include <cmath>
 namespace epl::Math
 {
 	inline constexpr float epsilon() noexcept
@@ -44,8 +46,10 @@ namespace epl::Math
 	}
 
 	// Public constexpr sqrt function
-	inline constexpr float sqrt(float x) noexcept
+	inline constexpr float sqrt(float x)
 	{
+		assert(x < infinity() && "sqrt: infinite value error.");
+		assert(x > -infinity() && "sqrt: negative infinite value error.");
 		return x > 0.f ? sqrtNewtonRaphson(x, x, 0.f) : 0.f;
 	}
 

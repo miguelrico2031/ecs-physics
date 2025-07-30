@@ -50,6 +50,11 @@ namespace epl
 		const SphereCollider& addSphereColliderToBody(Entity entity, float radius);
 		//adds a box collider to a body and if it is dynamic, calculates it's inertia tensor
 		const BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize);
+		//adds a axis aligned box collider to a NON dynamic (kinematic) body
+		//a dynamic body is not allowed to have an AABB due to it's absence of rotation.
+		//AABBs are meant to be used for (often satic) non dynamic bodies with axis aligned orientations 
+		//because they are faster to check intersections.
+		const AABBCollider& addAABBColliderToBody(Entity entity, Vector3 halfSize);
 #pragma endregion
 
 #pragma region RAYCAST_HELPERS

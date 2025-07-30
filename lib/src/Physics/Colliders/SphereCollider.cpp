@@ -14,28 +14,30 @@ namespace epl
 		Vector3 pos1 = reg.getComponent<Position>(e1).value;
 		Vector3 pos2 = reg.getComponent<Position>(e2).value;
 		Vector3 delta = pos2 - pos1;
-		float distance = Vector3::magnitude(delta);
+		float distanceSq = Vector3::squaredMagnitude(delta);
 		float totalRadius = c1.radius + c2.radius;
-		if (distance >= totalRadius)
+		if (distanceSq >= totalRadius * totalRadius)
 		{
 			return false;
 		}
 
+		float distance = Math::sqrt(distanceSq);
 		if (distance > Math::epsilon())
 		{
 			col.normal = delta / distance;
 			Vector3 contactPoint1 = pos1 + col.normal * c1.radius;
 			Vector3 contactPoint2 = pos2 - col.normal * c2.radius;
-			col.contactPoint = (contactPoint1 + contactPoint2) * .5f;
+			col.contactPoints[0] = (contactPoint1 + contactPoint2) * .5f;
 			col.depth = totalRadius - distance;
 		}
 		else //the spheres at almost entirely overlapped
 		{
 			col.normal = { 0, 1, 0 }; //arbitrary normal
-			col.contactPoint = (pos1 + pos2) * .5f;
+			col.contactPoints[0] = (pos1 + pos2) * .5f;
 			col.depth = totalRadius;
 
 		}
+		col.contactPointsCount = 1;
 		col.entity1 = e1;
 		col.entity2 = e2;
 		return true;
@@ -76,7 +78,7 @@ namespace epl
 		{
 			col.normal = delta / distance;
 			col.depth = sphereRadius - distance;
-			col.contactPoint = closestPoint;
+			col.contactPoints[0] = closestPoint;
 		}
 		else //sphere center is inside the AABB
 		{
@@ -97,8 +99,9 @@ namespace epl
 			}
 
 			col.depth = sphereRadius;
-			col.contactPoint = spherePosition + col.normal * sphereRadius;
+			col.contactPoints[0] = spherePosition + col.normal * sphereRadius;
 		}
+		col.contactPointsCount = 1;
 		return true;
 	}
 

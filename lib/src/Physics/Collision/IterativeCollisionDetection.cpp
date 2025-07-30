@@ -7,12 +7,13 @@ namespace epl
 {
 	void IterativeCollisionDetection::detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions)
 	{
+		static bool frame1 = true;
 		const auto& allColliderTypes = colliderReg.getAllTypes();
 
 		for (size_t i = 0; i < allColliderTypes.size(); i++)
 		{
 			auto& colliderType1 = allColliderTypes[i];
-			for (size_t j = i; j < allColliderTypes.size(); j++)
+			for (size_t j = 0; j < allColliderTypes.size(); j++)
 			{
 				auto& colliderType2 = allColliderTypes[j];
 				const CollisionCheck* collisionCheckPtr = colliderReg.getCollisionCheck(colliderType1.id, colliderType2.id);
@@ -35,6 +36,7 @@ namespace epl
 								}
 							});
 					});
+				
 			}
 		}
 	}

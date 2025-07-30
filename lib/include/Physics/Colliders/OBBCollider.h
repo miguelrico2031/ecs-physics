@@ -39,6 +39,7 @@ namespace epl
 
 		float projectBox(const Vector3& axisToProject, const Vector3 boxAxes[3], const Vector3& boxHalfSize);
 
+		void getBoxVertices(const Vector3& position, const Vector3& halfSize, const Vector3 axes[3], Vector3 vertices[8]);
 
 		Matrix3x3 calculateRotatedInverseInertiaTensor(const Matrix3x3& localInvInertia, const Quaternion& rotation);
 
