@@ -6,6 +6,6 @@ namespace epl
 	class IterativeCollisionDetection : public ICollisionDetectionSystem
 	{
 	public:
-		virtual void detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions) override;
+		virtual void detectCollisions(const Registry& reg, std::vector<Collision>& collisions) override;
 	};
 }

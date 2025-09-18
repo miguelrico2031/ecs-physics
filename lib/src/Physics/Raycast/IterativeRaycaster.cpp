@@ -1,15 +1,18 @@
 #include <Physics/Raycast/IterativeRaycaster.h>
 #include <Physics/Motion/MotionComponents.h>
 
+#include <Physics/Colliders/ColliderFuncs.h>
+
 namespace epl
 {
-	bool IterativeRaycaster::raycast(const Ray& ray, const Registry& reg, const ColliderRegistry& colliderReg, RayHit& hit)
+	bool IterativeRaycaster::raycast(const Ray& ray, const Registry& reg, RayHit& hit)
 	{
 		bool intersected = false;
 		hit.distanceFromRayOrigin = Math::infinity();
 
 		RayHit newHit;
 
+		/*
 		const auto& allColliderTypes = colliderReg.getAllTypes();
 		for (const auto& colliderType : allColliderTypes)
 		{
@@ -36,13 +39,28 @@ namespace epl
 					}
 				});
 		}
+		*/
+
+		for (const auto [entity, obb] : reg.iterate<OBBCollider>())
+		{
+			if (ColliderFuncs::isIntersectingOBB(reg, ray, obb, entity, newHit))
+			{
+				intersected = true;
+				if (newHit.distanceFromRayOrigin < hit.distanceFromRayOrigin)
+				{
+					hit = newHit;
+					hit.entity = entity;
+					//hit.collider = &col;
+				}
+			}
+		}
 
 		return intersected;
 	}
 
-	void IterativeRaycaster::raycastMultiple(const Ray& ray, const Registry& reg, const ColliderRegistry& colliderReg, 
-		std::vector<RayHit>& hits, size_t maxHits)
-	{		
+	void IterativeRaycaster::raycastMultiple(const Ray& ray, const Registry& reg, std::vector<RayHit>& hits, size_t maxHits)
+	{	
+		/*
 		const auto& allColliderTypes = colliderReg.getAllTypes();
 		for (const auto& colliderType : allColliderTypes)
 		{
@@ -72,6 +90,19 @@ namespace epl
 						hits.push_back(newHit);
 					}
 				});
+		}
+		*/
+
+		for (const auto [entity, obb] : reg.iterate<OBBCollider>())
+		{
+			if (hits.size() >= maxHits) return;
+			RayHit newHit;
+			if (ColliderFuncs::isIntersectingOBB(reg, ray, obb, entity, newHit))
+			{
+				newHit.entity = entity;
+				//newHit.collider = &col;
+				hits.push_back(newHit);
+			}
 		}
 	}
 }

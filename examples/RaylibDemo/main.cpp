@@ -129,8 +129,8 @@ void registerCustomComponents(epl::Registry& reg)
 void createFloor(epl::World& world)
 {
 	auto e = world.createKinematicBody(epl::Vector3{ 0.f, -2, 0.f });
-	world.addAABBColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
-	//world.addBoxColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
+	//world.addAABBColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
+	world.addBoxColliderToBody(e, epl::Vector3{ 30.f, 2, 30.f });
 }
 
 void createBodies(epl::World& world)
@@ -147,14 +147,14 @@ void createBodies(epl::World& world)
 		pm.friction = SimulationParams.bodiesFriction;
 
 
-		if (i % 2 == 0)
-		{
-			world.addSphereColliderToBody(e, .5f);
-		}
-		else
-		{
+		//if (i % 2 == 0)
+		//{
+		//	world.addSphereColliderToBody(e, .5f);
+		//}
+		//else
+		//{
 			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
-		}
+		//}
 		//auto angles = randomEulerAngles();
 		//world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
 	}

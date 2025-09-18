@@ -9,8 +9,6 @@ namespace epl
 		Entity entity1;
 		Entity entity2;
 		Vector3 normal;
-		//Vector3 contactPoint;
-		//Vector3 contactPoint2__;
 		Vector3 contactPoints[4];
 		int contactPointsCount;
 		float depth;

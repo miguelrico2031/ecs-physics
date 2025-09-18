@@ -3,11 +3,11 @@
 #include <Physics/Collision/IterativeCollisionDetection.h>
 #include <Physics/Collision/ProjectionAndImpulseSolver.h>
 #include <Physics/Raycast/IterativeRaycaster.h>
+#include <Physics/Colliders/ColliderFuncs.h>
 namespace epl
 {
 	World::World(size_t maxEntities, float damping)
 		: m_registry(std::make_shared<Registry>(maxEntities)),
-		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
@@ -17,12 +17,10 @@ namespace epl
 	{
 		m_collisions.reserve(maxEntities / 2);
 		registerPhysicsComponents();
-		registerBuiltInColliders();
 	}
 
 	World::World(std::shared_ptr<Registry> registry, float damping)
 		: m_registry(registry),
-		m_colliderRegistry(std::make_unique<ColliderRegistry>()),
 		m_integrationSystem(std::make_unique<EulerSemiImplicit>()),
 		m_gravitySystem(std::make_unique<GravitySystem>()),
 		m_collisionDetectionSystem(std::make_unique<IterativeCollisionDetection>()),
@@ -31,7 +29,6 @@ namespace epl
 		m_damping(damping)
 	{
 		m_collisions.reserve(m_registry->getMaxEntities() / 2);
-		registerBuiltInColliders();
 		registerPhysicsComponents();
 	}
 
@@ -71,7 +68,7 @@ namespace epl
 		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
 			const Mass& mass = m_registry->getComponent<Mass>(entity);
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(radius, mass.inverseMass);
+			auto invInertia = ColliderFuncs::calculateSphereInverseInertiaTensor(radius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 		return col;
@@ -84,10 +81,10 @@ namespace epl
 		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
 			const Mass& mass = m_registry->getComponent<Mass>(entity);
-			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(halfSize, mass.inverseMass);
+			auto localInvInertia = ColliderFuncs::calculateBoxInverseInertiaTensor(halfSize, mass.inverseMass);
 			m_registry->addComponent<LocalInverseInertia>(entity, localInvInertia);
 			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
-			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			auto rotatedInvInertia = ColliderFuncs::calculateRotatedBoxInverseInertiaTensor(localInvInertia, rotation);
 			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
 		}
 		return col;
@@ -116,7 +113,7 @@ namespace epl
 			m_integrationSystem->integrate(*m_registry, timeStepPerSubstep, m_damping);
 			//detect collisions
 			m_collisions.clear();
-			m_collisionDetectionSystem->detectCollisions(*m_registry, *m_colliderRegistry, m_collisions);
+			m_collisionDetectionSystem->detectCollisions(*m_registry, m_collisions);
 			//solve collisions
 			if (!m_collisions.empty())
 			{
@@ -127,12 +124,12 @@ namespace epl
 
 	bool World::raycast(const Ray& ray, RayHit& hit) const
 	{
-		return m_raycastSystem->raycast(ray, *m_registry, *m_colliderRegistry, hit);
+		return m_raycastSystem->raycast(ray, *m_registry, hit);
 	}
 
 	void World::raycastMultiple(const Ray& ray, std::vector<RayHit>& hits, size_t maxHits) const
 	{
-		return m_raycastSystem->raycastMultiple(ray, *m_registry, *m_colliderRegistry, hits, maxHits);
+		return m_raycastSystem->raycastMultiple(ray, *m_registry, hits, maxHits);
 	}
 
 
@@ -189,7 +186,7 @@ namespace epl
 		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
 			const Mass& mass = m_registry->getComponent<Mass>(entity);
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(newRadius, mass.inverseMass);
+			auto invInertia = ColliderFuncs::calculateSphereInverseInertiaTensor(newRadius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 	}
@@ -202,10 +199,10 @@ namespace epl
 		if (m_registry->hasComponent<DynamicBody>(entity))
 		{
 			const Mass& mass = m_registry->getComponent<Mass>(entity);
-			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(newHalfSize, mass.inverseMass);
+			auto localInvInertia = ColliderFuncs::calculateBoxInverseInertiaTensor(newHalfSize, mass.inverseMass);
 			m_registry->getComponent<LocalInverseInertia>(entity).tensor = localInvInertia;
 			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
-			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			auto rotatedInvInertia = ColliderFuncs::calculateRotatedBoxInverseInertiaTensor(localInvInertia, rotation);
 			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
 		}
 	}
@@ -219,16 +216,16 @@ namespace epl
 
 		if (const auto& sphereOpt = m_registry->tryGetComponent<SphereCollider>(entity))
 		{
-			auto invInertia = SphereColliderFuncs::calculateInverseInertiaTensor(sphereOpt->radius, mass.inverseMass);
+			auto invInertia = ColliderFuncs::calculateSphereInverseInertiaTensor(sphereOpt->radius, mass.inverseMass);
 			m_registry->getComponent<InverseInertia>(entity).tensor = invInertia;
 		}
 
 		else if (const auto& boxOpt = m_registry->tryGetComponent<BoxCollider>(entity))
 		{
-			auto localInvInertia = AABBColliderFuncs::calculateBoxInverseInertiaTensor(boxOpt->halfSize, mass.inverseMass);
+			auto localInvInertia = ColliderFuncs::calculateBoxInverseInertiaTensor(boxOpt->halfSize, mass.inverseMass);
 			m_registry->getComponent<LocalInverseInertia>(entity).tensor = localInvInertia;
 			const Quaternion& rotation = m_registry->getComponent<Rotation>(entity).value;
-			auto rotatedInvInertia = OBBColliderFuncs::calculateRotatedInverseInertiaTensor(localInvInertia, rotation);
+			auto rotatedInvInertia = ColliderFuncs::calculateRotatedBoxInverseInertiaTensor(localInvInertia, rotation);
 			m_registry->getComponent<InverseInertia>(entity).tensor = rotatedInvInertia;
 		}
 	}
@@ -276,27 +273,8 @@ namespace epl
 		m_registry->registerComponentType<LocalInverseInertia>();
 		m_registry->registerComponentType<DynamicBody>();
 		m_registry->registerComponentType<PhysicMaterial>();
-	}
-
-	void World::registerBuiltInColliders()
-	{
 		m_registry->registerComponentType<AABBCollider>();
-		m_colliderRegistry->registerColliderType<AABBCollider>();
-		m_colliderRegistry->registerCollisionCheck<AABBCollider, AABBCollider>(AABBColliderFuncs::isCollidingAABBAABB);
-		m_colliderRegistry->registerRayIntersectionCheck<AABBCollider>(AABBColliderFuncs::isIntersectingAABB);
-
 		m_registry->registerComponentType<SphereCollider>();
-		m_colliderRegistry->registerColliderType<SphereCollider>();
-		m_colliderRegistry->registerCollisionCheck<SphereCollider, SphereCollider>(SphereColliderFuncs::isCollidingSphereSphere);
-		m_colliderRegistry->registerCollisionCheck<SphereCollider, AABBCollider>(SphereColliderFuncs::isCollidingSphereAABB);
-		m_colliderRegistry->registerRayIntersectionCheck<SphereCollider>(SphereColliderFuncs::isIntersectingSphere);
-
-
 		m_registry->registerComponentType<OBBCollider>();
-		m_colliderRegistry->registerColliderType<OBBCollider>();
-		m_colliderRegistry->registerCollisionCheck<OBBCollider, OBBCollider>(OBBColliderFuncs::isCollidingOBBOBB);
-		m_colliderRegistry->registerCollisionCheck<OBBCollider, AABBCollider>(OBBColliderFuncs::isCollidingOBBAABB);
-		m_colliderRegistry->registerCollisionCheck<SphereCollider, OBBCollider>(OBBColliderFuncs::isCollidingSphereOBB);
-		m_colliderRegistry->registerRayIntersectionCheck<OBBCollider>(OBBColliderFuncs::isIntersectingOBB);
 	}
 }

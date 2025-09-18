@@ -1,13 +1,13 @@
 #include <Physics/Collision/IterativeCollisionDetection.h>
 #include <ECS/Registry.h>
 #include <Physics/Motion/MotionComponents.h>
-#include <Physics/Colliders/ColliderRegistry.h>
+#include <Physics/Colliders/ColliderFuncs.h>
 
 namespace epl
 {
-	void IterativeCollisionDetection::detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions)
+	void IterativeCollisionDetection::detectCollisions(const Registry& reg, std::vector<Collision>& collisions)
 	{
-		static bool frame1 = true;
+		/*
 		const auto& allColliderTypes = colliderReg.getAllTypes();
 
 		for (size_t i = 0; i < allColliderTypes.size(); i++)
@@ -37,6 +37,20 @@ namespace epl
 							});
 					});
 				
+			}
+		}
+		*/
+
+		for (const auto [entity1, obb1] : reg.iterate<OBBCollider>())
+		{
+			for (const auto [entity2, obb2] : reg.iterate<OBBCollider>())
+			{
+				if (entity1 >= entity2) continue;
+				Collision collision;
+				if (ColliderFuncs::isCollidingOBBOBB(reg, obb1, obb2, entity1, entity2, collision))
+				{
+					collisions.push_back(collision);
+				}
 			}
 		}
 	}

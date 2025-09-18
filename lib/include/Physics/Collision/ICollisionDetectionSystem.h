@@ -10,6 +10,6 @@ namespace epl
 	{
 	public:
 		virtual ~ICollisionDetectionSystem() = default;
-		virtual void detectCollisions(const Registry& reg, const ColliderRegistry& colliderReg, std::vector<Collision>& collisions) = 0;
+		virtual void detectCollisions(const Registry& reg, std::vector<Collision>& collisions) = 0;
 	};
 }
