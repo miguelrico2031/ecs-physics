@@ -68,7 +68,7 @@ int main()
 	epl::World world(regPtr, .2f);
 
 	registerCustomComponents(*regPtr);
-	createFloor(world);
+	//createFloor(world);
 	createBodies(world);
 	//createBigCuboid(world);
 
@@ -147,14 +147,14 @@ void createBodies(epl::World& world)
 		pm.friction = SimulationParams.bodiesFriction;
 
 
-		//if (i % 2 == 0)
-		//{
-		//	world.addSphereColliderToBody(e, .5f);
-		//}
-		//else
-		//{
+		if (i % 2 == 0)
+		{
+			world.addSphereColliderToBody(e, .5f);
+		}
+		else
+		{
 			world.addBoxColliderToBody(e, epl::Vector3{ .75f, .75f, .75f });
-		//}
+		}
 		//auto angles = randomEulerAngles();
 		//world.getRegistry().getComponent<epl::Torque>(e).value += epl::Vector3{ angles.x, angles.y, angles.z } *10.f;
 	}
@@ -223,12 +223,24 @@ void render(epl::World& world, Camera& camera)
 
 void renderColliders(const epl::Registry& reg)
 {
+	for (const auto& [entity, bounds] : reg.iterate<epl::ColliderBounds>())
+	{
+		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
+
+		//TODO: should bounds be defined as 2 min-max vectors or ar they always symmetrical and a single halfsize vector would be fine?
+		//probably thgey should be in world space and using min max vectors
+
+		DrawCubeWiresV(toRaylib(position), toRaylib(bounds.localMax * 2.f), WHITE);
+	}
+
+
 	for (const auto& [entity, collider] : reg.iterate<epl::AABBCollider>())
 	{
 		Color color = reg.hasComponent<custom::IsColliding>(entity) ? LIME : ORANGE;
 		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
-		DrawCubeWires({ position.x, position.y, position.z },
+		DrawCube({ position.x, position.y, position.z },
 			collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, color);
+
 	}
 	for (const auto& [entity, collider] : reg.iterate<epl::SphereCollider>())
 	{
@@ -241,7 +253,7 @@ void renderColliders(const epl::Registry& reg)
 		rlPushMatrix();
 		rlTranslatef(position.x, position.y, position.z);
 		rlRotatef(RAD2DEG * angleRadians, axis.x, axis.y, axis.z);
-		DrawSphereWires({0, 0, 0}, collider.radius, 8, 10, color);
+		DrawSphere({0, 0, 0}, collider.radius, color);
 		rlPopMatrix();
 	}
 	
@@ -256,13 +268,14 @@ void renderColliders(const epl::Registry& reg)
 		rlPushMatrix();
 		rlTranslatef(position.x, position.y, position.z);
 		rlRotatef(RAD2DEG * angleRadians, axis.x, axis.y, axis.z);
-		DrawCubeWiresV({ 0, 0, 0 }, toRaylib(collider.halfSize * 2.f), color);
+		DrawCubeV({ 0, 0, 0 }, toRaylib(collider.halfSize * 2.f), color);
 		rlPopMatrix();
 
 		////also draw the box not rotated to debug
 		//DrawCubeWires({ position.x, position.y, position.z },
 		//	collider.halfSize.x * 2.f, collider.halfSize.y * 2.f, collider.halfSize.z * 2.f, LIGHTGRAY);
 	}
+
 
 }
 

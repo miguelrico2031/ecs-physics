@@ -46,5 +46,10 @@ namespace epl
 		Matrix3x3 calculateRotatedBoxInverseInertiaTensor(const Matrix3x3& localInvInertia, const Quaternion& rotation);
 		Matrix3x3 calculateSphereInverseInertiaTensor(float radius, float inverseMass);
 #pragma endregion
+
+#pragma region BOUNDS
+		void calculateSphereBounds(float radius, ColliderBounds& bounds);
+		void calculateBoxBounds(Vector3 halfSize, ColliderBounds& bounds);
+#pragma endregion
 	}
 }

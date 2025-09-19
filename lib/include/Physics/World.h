@@ -6,6 +6,7 @@
 #include <Physics/Colliders/SphereCollider.h>
 #include <Physics/Colliders/AABBCollider.h>
 #include <Physics/Colliders/OBBCollider.h>
+#include <Physics/Colliders/ColliderBounds.h>
 #include <Physics/Collision/ICollisionDetectionSystem.h>
 #include <Physics/Collision/ICollisionResolutionSystem.h>
 #include <Physics/Collision/Collision.h>
@@ -37,23 +38,24 @@ namespace epl
 		void step(float timeStep, unsigned int substeps = 1);
 #pragma endregion
 
-#pragma region ENTITIES_CREATION_HELPERS
+#pragma region BODY_LIFETIME
 		//creates an entity with all the necessary components to act as a dynamic rigid body
 		Entity createDynamicBody(float mass = 1.f, Vector3 position = Vector3::zero(), 
 			Quaternion rotation = Quaternion::identity(), Vector3 gravity = Gravity::earth());
-
 		//creates an entity with all the necessary components to act as a kinematic rigid body
 		Entity createKinematicBody(Vector3 position = Vector3::zero(), Quaternion rotation = Quaternion::identity());
+		
+		void destroyBody(Entity entity);
+#pragma endregion
 
+#pragma region COLLIDER_LIFETIME
 		//adds a sphere collider to a body and if it is dynamic, calculates it's inertia tensor
 		const SphereCollider& addSphereColliderToBody(Entity entity, float radius);
 		//adds a box collider to a body and if it is dynamic, calculates it's inertia tensor
 		const BoxCollider& addBoxColliderToBody(Entity entity, Vector3 halfSize);
-		//adds a axis aligned box collider to a NON dynamic (kinematic) body
-		//a dynamic body is not allowed to have an AABB due to it's absence of rotation.
-		//AABBs are meant to be used for (often satic) non dynamic bodies with axis aligned orientations 
-		//because they are faster to check intersections.
-		const AABBCollider& addAABBColliderToBody(Entity entity, Vector3 halfSize);
+		//const AABBCollider& addAABBColliderToBody(Entity entity, Vector3 halfSize);
+
+		void removeColliderFromBody(Entity entity);
 #pragma endregion
 
 #pragma region RAYCAST_HELPERS
@@ -81,7 +83,7 @@ namespace epl
 
 #pragma region BODY_HELPERS
 		void changeDynamicBodyMass(Entity entity, float newMass);
-		//this only works properly if the entity started its lifetime as a dynamic body (createDynamicBody())
+		//this only works properly if the entity started its lifetime as a dynamic body (created by createDynamicBody())
 		//and it needs to alternate between being on and off the physics simulation.
 		//a createKinematicBody() entity will cause undefined behaviour in this method.
 		//when switching from dynamic to kinematic (setToDynamic = false),

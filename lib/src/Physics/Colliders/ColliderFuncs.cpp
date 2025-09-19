@@ -10,6 +10,8 @@
 
 namespace epl
 {
+	constexpr float BOUNDS_PADDING = .0f;
+
 #pragma region HELPERS
 
 	bool ColliderFuncs::isIntersectingBox(const Ray& ray, const Vector3& position, const Vector3& halfSize, RayHit& hit)
@@ -711,5 +713,22 @@ namespace epl
 		return Matrix3x3(Vector3{ diagonal, diagonal, diagonal });
 	}
 
+#pragma endregion
+
+#pragma region BOUNDS
+	void ColliderFuncs::calculateSphereBounds(float radius, ColliderBounds& bounds)
+	{
+		radius += BOUNDS_PADDING;
+		bounds.localMin = Vector3{ -radius, -radius, -radius };
+		bounds.localMax = Vector3{ radius, radius, radius };
+	}
+
+	void ColliderFuncs::calculateBoxBounds(Vector3 halfSize, ColliderBounds& bounds)
+	{
+		//first we make a sphere that fully contains the box, no matter it's rotation
+		//then we get that sphere's bounds
+		float enclosingSphereRadius = Vector3::magnitude(halfSize);
+		return calculateSphereBounds(enclosingSphereRadius, bounds);
+	}
 #pragma endregion
 }
