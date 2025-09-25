@@ -69,8 +69,9 @@ namespace epl
 
 	const SphereCollider& World::addSphereColliderToBody(Entity entity, float radius)
 	{
-		auto& bounds = m_registry->addComponent<ColliderBounds>(entity, Vector3::zero(), Vector3::zero());
-		ColliderFuncs::calculateSphereBounds(radius, bounds);
+		const auto& position = m_registry->getComponent<Position>(entity);
+		auto& bounds = m_registry->addComponent<ColliderBounds>(entity);
+		ColliderFuncs::calculateSphereBounds(position.value, radius, bounds);
 
 		auto& col = m_registry->addComponent<SphereCollider>(entity, radius);
 		//inertia calc if dynamic
@@ -85,8 +86,9 @@ namespace epl
 
 	const BoxCollider& World::addBoxColliderToBody(Entity entity, Vector3 halfSize)
 	{
-		auto& bounds = m_registry->addComponent<ColliderBounds>(entity, Vector3::zero(), Vector3::zero());
-		ColliderFuncs::calculateBoxBounds(halfSize, bounds);
+		const auto& position = m_registry->getComponent<Position>(entity);
+		auto& bounds = m_registry->addComponent<ColliderBounds>(entity);
+		ColliderFuncs::calculateBoxBounds(position.value, halfSize, bounds);
 
 		auto& col = m_registry->addComponent<BoxCollider>(entity, halfSize);
 		//inertia calc if dynamic

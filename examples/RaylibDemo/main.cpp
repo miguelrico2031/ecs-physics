@@ -23,7 +23,7 @@ namespace custom
 
 struct
 {
-	const int numBodies = 10;
+	const int numBodies = 2;
 	const epl::Vector3 startPos = { 0.f, 25.f, 0.f };
 	const float spread = 20.f;
 	const float bodiesRestitution = 0.5f;
@@ -170,7 +170,7 @@ void createBigCuboid(epl::World& world)
 
 void update(epl::World& world, Camera& camera, float dt)
 {
-	if (IsKeyPressed(KEY_SPACE))
+	if (IsKeyPressed(KEY_P))
 	{
 		togglePause();
 	}
@@ -225,12 +225,17 @@ void renderColliders(const epl::Registry& reg)
 {
 	for (const auto& [entity, bounds] : reg.iterate<epl::ColliderBounds>())
 	{
-		epl::Vector3 position = reg.getComponent<epl::Position>(entity).value;
+		epl::Vector3 tightPosition = reg.getComponent<epl::Position>(entity).value;
+		//draw thin AABB
+		DrawCubeWiresV(toRaylib(tightPosition), toRaylib(bounds.localTightMax * 2.f), LIGHTGRAY);
 
-		//TODO: should bounds be defined as 2 min-max vectors or ar they always symmetrical and a single halfsize vector would be fine?
-		//probably thgey should be in world space and using min max vectors
 
-		DrawCubeWiresV(toRaylib(position), toRaylib(bounds.localMax * 2.f), WHITE);
+		epl::Vector3 fatPosition = (bounds.worldFatMin + bounds.worldFatMax) * .5f;
+		epl::Vector3 fatSize = bounds.worldFatMax - bounds.worldFatMin;
+		//draw fat AABB
+		DrawCubeWiresV(toRaylib(fatPosition), toRaylib(fatSize), WHITE);
+
+		
 	}
 
 

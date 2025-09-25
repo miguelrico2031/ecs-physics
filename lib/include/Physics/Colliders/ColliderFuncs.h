@@ -48,8 +48,8 @@ namespace epl
 #pragma endregion
 
 #pragma region BOUNDS
-		void calculateSphereBounds(float radius, ColliderBounds& bounds);
-		void calculateBoxBounds(Vector3 halfSize, ColliderBounds& bounds);
+		void calculateSphereBounds(const Vector3& position, float radius, ColliderBounds& bounds);
+		void calculateBoxBounds(const Vector3& position, const Vector3& halfSize, ColliderBounds& bounds);
 #pragma endregion
 	}
 }

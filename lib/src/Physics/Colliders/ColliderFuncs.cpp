@@ -10,7 +10,7 @@
 
 namespace epl
 {
-	constexpr float BOUNDS_PADDING = .0f;
+	constexpr float BOUNDS_FAT_PADDING_FACTOR = .3f;
 
 #pragma region HELPERS
 
@@ -716,19 +716,21 @@ namespace epl
 #pragma endregion
 
 #pragma region BOUNDS
-	void ColliderFuncs::calculateSphereBounds(float radius, ColliderBounds& bounds)
+	void ColliderFuncs::calculateSphereBounds(const Vector3& position, float radius, ColliderBounds& bounds)
 	{
-		radius += BOUNDS_PADDING;
-		bounds.localMin = Vector3{ -radius, -radius, -radius };
-		bounds.localMax = Vector3{ radius, radius, radius };
+		bounds.localTightMin = Vector3{ -radius, -radius, -radius };
+		bounds.localTightMax = Vector3{ radius, radius, radius };
+
+		bounds.worldFatMin = position + bounds.localTightMin * (1.f + BOUNDS_FAT_PADDING_FACTOR);
+		bounds.worldFatMax = position + bounds.localTightMax * (1.f + BOUNDS_FAT_PADDING_FACTOR);
 	}
 
-	void ColliderFuncs::calculateBoxBounds(Vector3 halfSize, ColliderBounds& bounds)
+	void ColliderFuncs::calculateBoxBounds(const Vector3& position, const Vector3& halfSize, ColliderBounds& bounds)
 	{
 		//first we make a sphere that fully contains the box, no matter it's rotation
 		//then we get that sphere's bounds
 		float enclosingSphereRadius = Vector3::magnitude(halfSize);
-		return calculateSphereBounds(enclosingSphereRadius, bounds);
+		return calculateSphereBounds(position, enclosingSphereRadius, bounds);
 	}
 #pragma endregion
 }
